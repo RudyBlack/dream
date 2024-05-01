@@ -2,6 +2,8 @@ import { Module } from '../module';
 import * as THREE from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import WebGPU from 'three/examples/jsm/capabilities/WebGPU.js';
+import WebGL from 'three/examples/jsm/capabilities/WebGL.js';
 
 class DreamJourney {
   private readonly _canvas: HTMLCanvasElement;
@@ -29,23 +31,35 @@ class DreamJourney {
   }
 
   public async init() {
-    this._renderer = new WebGPURenderer({ antialias: true });
+    if (WebGPU.isAvailable() === false && WebGL.isWebGL2Available() === false) {
+      document.body.appendChild(WebGPU.getErrorMessage());
+
+      throw new Error('No WebGPU or WebGL2 support');
+    }
+
+    this._renderer = new WebGPURenderer({ antialias: true, canvas: this._canvas });
     this._scene = new THREE.Scene();
-    this._camera = new THREE.PerspectiveCamera(75, this._canvas.clientWidth / this._canvas.clientHeight, 1, 20000);
+    this._camera = new THREE.PerspectiveCamera(75, this._canvas.clientWidth / this._canvas.clientHeight, 1, 1000);
     this._orbitControls = new OrbitControls(this._camera, this._canvas);
 
-    this._scene.background = new THREE.Color(0xffffff);
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     const cube = new THREE.Mesh(geometry, material);
-
-    console.log(this.scene);
-    this._scene.add(cube);
-
+    const scene = this.scene;
     const renderer = this._renderer;
     const camera = this._camera;
     const controls = this._orbitControls;
     const canvas = this._canvas;
+
+    const ambientLight = new THREE.AmbientLight(0xb0b0b0);
+
+    const light = new THREE.DirectionalLight(0xffffff, 1.0);
+    light.position.set(0.32, 0.39, 0.7);
+
+    scene.add(ambientLight);
+    scene.add(light);
+
+    this._scene.add(cube);
 
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -61,6 +75,8 @@ class DreamJourney {
     controls.update();
 
     window.addEventListener('resize', this.onWindowResize);
+
+    this.test();
 
     this.render();
   }
@@ -102,14 +118,18 @@ class DreamJourney {
     }
     animate();
   }
-}
 
-function ensureNotNull<T extends object>() {
-  return function (target: T, propertyKey: string, descriptor: PropertyDescriptor) {
-    if (descriptor && descriptor.get) {
-      if (!descriptor.get()) throw `not found ${propertyKey}`;
-    }
-  };
+  private test(): void {
+    // const scene = this.scene;
+    // const camera = this.camera;
+    // const geometry = new THREE.BoxGeometry(1, 1);
+    // const material = new MeshStandardNodeMaterial();
+    //
+    // // Create mesh
+    // const mesh = new THREE.Mesh(geometry, material);
+    // scene.add(mesh);
+    // camera.position.z = 2;
+  }
 }
 
 export default DreamJourney;

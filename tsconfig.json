@@ -20,7 +20,7 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Experimental */
-    "experimentalDecorators": true
+//    "experimentalDecorators": true
   },
   "include": ["src"]
 }
