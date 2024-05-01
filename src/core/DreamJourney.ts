@@ -2,6 +2,8 @@ import { Module } from '../module';
 import * as THREE from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import WebGPU from 'three/examples/jsm/capabilities/WebGPU.js';
+import WebGL from 'three/examples/jsm/capabilities/WebGL.js';
 
 class DreamJourney {
   private readonly _canvas: HTMLCanvasElement;
@@ -31,19 +33,27 @@ class DreamJourney {
   public async init() {
     this._renderer = new WebGPURenderer({ canvas: this._canvas, antialias: true });
     this._scene = new THREE.Scene();
-    this._camera = new THREE.PerspectiveCamera(75, this._canvas.clientWidth / this._canvas.clientHeight, 1, 20000);
+    this._camera = new THREE.PerspectiveCamera(75, this._canvas.clientWidth / this._canvas.clientHeight, 1, 1000);
     this._orbitControls = new OrbitControls(this._camera, this._canvas);
 
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     const cube = new THREE.Mesh(geometry, material);
-
-    this._scene.add(cube);
-
+    const scene = this.scene;
     const renderer = this._renderer;
     const camera = this._camera;
     const controls = this._orbitControls;
     const canvas = this._canvas;
+
+    const ambientLight = new THREE.AmbientLight(0xb0b0b0);
+
+    const light = new THREE.DirectionalLight(0xffffff, 1.0);
+    light.position.set(0.32, 0.39, 0.7);
+
+    scene.add(ambientLight);
+    scene.add(light);
+
+    this._scene.add(cube);
 
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -52,9 +62,7 @@ class DreamJourney {
 
     camera.position.set(0, 0, 10);
 
-    controls.maxPolarAngle = Math.PI * 0.495;
 
-    window.addEventListener('resize', this.onWindowResize.bind(this));
 
     this.render();
   }
@@ -78,7 +86,6 @@ class DreamJourney {
     const camera = this.camera;
     const renderer = this.renderer;
     const canvas = this._canvas;
-
     camera.aspect = canvas.clientWidth / canvas.clientHeight;
     camera.updateProjectionMatrix();
 
@@ -90,7 +97,6 @@ class DreamJourney {
     const scene = this.scene;
     const camera = this.camera;
     const orbitControls = this._orbitControls;
-
     async function animate() {
       requestAnimationFrame(animate);
       await renderer.renderAsync(scene, camera);
