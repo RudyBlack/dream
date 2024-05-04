@@ -2,32 +2,34 @@ import { Module } from '../module';
 import * as THREE from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import WebGPU from 'three/examples/jsm/capabilities/WebGPU.js';
-import WebGL from 'three/examples/jsm/capabilities/WebGL.js';
+import { sceneFogNode } from '../nodes';
 
 class DreamJourney {
   private readonly _canvas: HTMLCanvasElement;
   private readonly _container: HTMLDivElement;
-  private _renderer?: WebGPURenderer;
-  private _scene?: THREE.Scene;
-  private _camera?: THREE.PerspectiveCamera;
   private _orbitControls?: OrbitControls;
 
-  get scene() {
-    return this._scene!;
+  constructor(canvas: HTMLCanvasElement, container: HTMLDivElement) {
+    this._canvas = canvas;
+    this._container = container;
   }
 
-  get camera() {
-    return this._camera!;
-  }
+  private _renderer?: WebGPURenderer;
 
   get renderer() {
     return this._renderer!;
   }
 
-  constructor(canvas: HTMLCanvasElement, container: HTMLDivElement) {
-    this._canvas = canvas;
-    this._container = container;
+  private _scene?: THREE.Scene;
+
+  get scene() {
+    return this._scene!;
+  }
+
+  private _camera?: THREE.PerspectiveCamera;
+
+  get camera() {
+    return this._camera!;
   }
 
   public async init() {
@@ -60,11 +62,14 @@ class DreamJourney {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.5;
 
-    camera.position.set(0, 0, 10);
+    camera.position.set(0, 10, 10);
+    camera.lookAt(0, 0, 0);
+    controls.update();
 
+    this.setFog(scene, camera);
 
-
-    this.render();
+    const render = this.render.bind(this);
+    renderer.setAnimationLoop(render);
   }
 
   public async setModule(...modules: Module[]) {
@@ -82,6 +87,25 @@ class DreamJourney {
     return Promise.all(modulesPromise);
   }
 
+  private setFog(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
+    // @ts-ignore
+    scene.fogNode = sceneFogNode(camera);
+
+    scene.add(new THREE.HemisphereLight(0xf0f5f5, 0xd0dee7, 0.5));
+
+    const planeGeometry = new THREE.PlaneGeometry(200, 200);
+    const planeMaterial = new THREE.MeshPhongMaterial({
+      color: 0x2c6a99,
+    });
+
+    const ground = new THREE.Mesh(planeGeometry, planeMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.scale.multiplyScalar(3);
+    ground.castShadow = true;
+    ground.receiveShadow = true;
+    scene.add(ground);
+  }
+
   private onWindowResize() {
     const camera = this.camera;
     const renderer = this.renderer;
@@ -97,12 +121,9 @@ class DreamJourney {
     const scene = this.scene;
     const camera = this.camera;
     const orbitControls = this._orbitControls;
-    async function animate() {
-      requestAnimationFrame(animate);
-      await renderer.renderAsync(scene, camera);
-      orbitControls?.update();
-    }
-    animate();
+
+    renderer.render(scene, camera);
+    orbitControls?.update();
   }
 }
 
