@@ -3,6 +3,9 @@ import * as THREE from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { sceneFogNode } from '../nodes';
+import { waterNode } from '../nodes/water.ts';
+import { normalWorld } from 'three/examples/jsm/nodes/accessors/NormalNode';
+import { color } from 'three/examples/jsm/nodes/Nodes';
 
 class DreamJourney {
   private readonly _canvas: HTMLCanvasElement;
@@ -33,7 +36,7 @@ class DreamJourney {
   }
 
   public async init() {
-    this._renderer = new WebGPURenderer({ canvas: this._canvas, antialias: true });
+    this._renderer = new WebGPURenderer({ canvas: this._canvas, antialias: false });
     this._scene = new THREE.Scene();
     this._camera = new THREE.PerspectiveCamera(75, this._canvas.clientWidth / this._canvas.clientHeight, 1, 1000);
     this._orbitControls = new OrbitControls(this._camera, this._canvas);
@@ -66,7 +69,8 @@ class DreamJourney {
     camera.lookAt(0, 0, 0);
     controls.update();
 
-    this.setFog(scene, camera);
+    // this.setFog(scene, camera);
+    this.setWater(scene);
 
     const render = this.render.bind(this);
     renderer.setAnimationLoop(render);
@@ -104,6 +108,14 @@ class DreamJourney {
     ground.castShadow = true;
     ground.receiveShadow = true;
     scene.add(ground);
+  }
+
+  private setWater(scene: THREE.Scene) {
+    const water = waterNode();
+    // scene.background = new THREE.Color(0x0487e2);
+    // scene.backgroundNode = normalWorld.y.mix(color(0x0487e2), color(0x0066ff));
+    water.position.y = 2;
+    scene.add(water);
   }
 
   private onWindowResize() {
