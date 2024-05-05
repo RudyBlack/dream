@@ -2,10 +2,8 @@ import { Module } from '../module';
 import * as THREE from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { sceneFogNode } from '../nodes';
+import { sceneFogNode, spaceWrapPoints } from '../nodes';
 import { waterNode } from '../nodes/water.ts';
-import { normalWorld } from 'three/examples/jsm/nodes/accessors/NormalNode';
-import { color } from 'three/examples/jsm/nodes/Nodes';
 
 class DreamJourney {
   private readonly _canvas: HTMLCanvasElement;
@@ -41,9 +39,6 @@ class DreamJourney {
     this._camera = new THREE.PerspectiveCamera(75, this._canvas.clientWidth / this._canvas.clientHeight, 1, 1000);
     this._orbitControls = new OrbitControls(this._camera, this._canvas);
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
     const scene = this.scene;
     const renderer = this._renderer;
     const camera = this._camera;
@@ -58,22 +53,31 @@ class DreamJourney {
     scene.add(ambientLight);
     scene.add(light);
 
-    this._scene.add(cube);
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const cube = new THREE.Mesh(geometry, material);
+    // this._scene.add(cube);
 
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.5;
 
-    camera.position.set(0, 10, 10);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 0, 10);
+    // camera.lookAt(0, 0, 0);
     controls.update();
 
-    // this.setFog(scene, camera);
-    this.setWater(scene);
-
+    const { wrapComputeNodes, wrapMeshes } = spaceWrapPoints();
+    scene.add(...wrapMeshes);
     const render = this.render.bind(this);
-    renderer.setAnimationLoop(render);
+
+    renderer.setAnimationLoop(() => {
+      wrapComputeNodes.forEach((computeNode) => {
+        renderer.compute(computeNode);
+      });
+
+      render();
+    });
   }
 
   public async setModule(...modules: Module[]) {
