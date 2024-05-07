@@ -2,7 +2,7 @@ import { Module } from '../module';
 import * as THREE from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { sceneFogNode, spaceWrapPoints } from '../nodes';
+import { sceneFogNode, spaceWarp, spaceWarp2, spaceWrapPoints } from '../nodes';
 import { waterNode } from '../nodes/water.ts';
 
 class DreamJourney {
@@ -67,16 +67,18 @@ class DreamJourney {
     // camera.lookAt(0, 0, 0);
     controls.update();
 
-    const { wrapComputeNodes, wrapMeshes } = spaceWrapPoints();
+    const { wrapComputeNodes, wrapMeshes } = spaceWrapPoints(camera);
+
     scene.add(...wrapMeshes);
-    const render = this.render.bind(this);
 
-    renderer.setAnimationLoop(() => {
-      wrapComputeNodes.forEach((computeNode) => {
-        renderer.compute(computeNode);
-      });
+    const { mesh, computeNode } = spaceWarp(camera, new THREE.Vector3(1, 1, 1));
 
-      render();
+    scene.add(mesh);
+
+    renderer.setAnimationLoop(async () => {
+      await renderer.compute(computeNode);
+      await renderer.compute(wrapComputeNodes);
+      this.render();
     });
   }
 
