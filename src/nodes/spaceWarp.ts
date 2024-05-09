@@ -37,7 +37,6 @@ export const spaceWarp = (camera: THREE.PerspectiveCamera, scale: Vector3) => {
   const particleBufferNode = storage(pointBuffer, 'vec3', pointNum);
   const velocityBufferNode = storage(velocityBuffer, 'vec3', pointNum);
 
-  //@ts-ignore
   const computeShaderFn = tslFn(() => {
     const particle = particleBufferNode.element(instanceIndex);
     const velocity = velocityBufferNode.element(instanceIndex);
@@ -59,10 +58,9 @@ export const spaceWarp = (camera: THREE.PerspectiveCamera, scale: Vector3) => {
     );
   });
 
-  //@ts-ignore
   const computeNode = computeShaderFn().compute(pointNum);
 
-  computeNode.onInit = (param: never) => {
+  computeNode.onInit = (param) => {
     const { renderer } = param;
 
     // @ts-ignore
@@ -131,7 +129,7 @@ export const spaceWarp2 = (camera: THREE.PerspectiveCamera) => {
   //@ts-ignore
   const computeNode = computeShaderFn().compute(pointNum);
 
-  computeNode.onInit = (param: never) => {
+  computeNode.onInit = (param) => {
     const { renderer } = param;
 
     // @ts-ignore
