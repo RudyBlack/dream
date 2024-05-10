@@ -4,6 +4,8 @@ import {
   Node as Node_ORIGIN,
 } from 'three/examples/jsm/nodes/Nodes';
 
+import { InstancedBufferAttribute, Mesh as Mesh_ORIGIN } from 'three';
+
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 
 declare module 'three/examples/jsm/nodes/Nodes' {
@@ -16,4 +18,6 @@ declare module 'three/examples/jsm/nodes/Nodes' {
   export class Node extends Node_ORIGIN {
     compute: (count: number, workgroupSize?: number[]) => ShaderNodeObject<ComputeNode>;
   }
+
+  export const If = (...params) => currentStack.if(...params);
 }

@@ -1,97 +1,215 @@
 import * as THREE from 'three';
 import {
-  attribute,
-  color,
-  ComputeNode,
   instanceIndex,
-  PointsNodeMaterial,
   storage,
-  StorageBufferNode,
-  tslFn,
   uniform,
-  vec2,
+  tslFn,
   vec3,
+  If,
+  texture,
+  SpriteNodeMaterial,
+  ShaderNodeObject,
+  StorageBufferNode,
+  UniformNode,
+  ComputeNode,
 } from 'three/examples/jsm/nodes/Nodes';
 
+import { InstancedBufferAttribute, Mesh, PerspectiveCamera, Scene } from 'three';
+import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
+import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 // @ts-ignore
 import StorageInstancedBufferAttribute from 'three/addons/renderers/common/StorageInstancedBufferAttribute.js';
 
-import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
-import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
+export class Particles {
+  private readonly particleCount = 1000000;
+  private readonly gravity = uniform(-0.0098);
+  private readonly bounce = uniform(0.8);
+  private readonly friction = uniform(0.99);
+  private readonly size = uniform(0.12);
+  private clickPosition = uniform(new THREE.Vector3());
 
-export const particles = () => {
-  const particleNum = 100;
-  const particleSize = 2; // vec2
+  private plane: THREE.Mesh;
 
-  const particleBuffer = new StorageInstancedBufferAttribute(particleNum, particleSize);
-  const velocityBuffer = new StorageInstancedBufferAttribute(particleNum, particleSize);
+  public readonly computeParticles: ShaderNodeObject<ComputeNode>;
+  private camera: PerspectiveCamera;
+  private renderer: WebGPURenderer;
 
-  const particleBufferNode = storage(particleBuffer, 'vec2', particleNum);
-  const velocityBufferNode = storage(velocityBuffer, 'vec2', particleNum);
+  private computeMouseHit: ShaderNodeObject<ComputeNode>;
 
-  const pointerVector = new THREE.Vector2(-5, 5); // Out of bounds first
-  const scaleVector = new THREE.Vector2(10, 10);
+  constructor(scene: Scene, renderer: WebGPURenderer, camera: PerspectiveCamera) {
+    this.renderer = renderer;
+    this.camera = camera;
+    const positionBuffer = this.createBuffer(this.particleCount);
+    const velocityBuffer = this.createBuffer(this.particleCount);
+    const colorBuffer = this.createBuffer(this.particleCount);
 
-  // @ts-ignore
-  const computeShaderFn = tslFn(() => {
-    // create buffers
+    const computeInitFn = this.computeInitFunction(positionBuffer, colorBuffer, this.particleCount);
+    const computeUpdateFn = (this.computeParticles = this.computeUpdateFunction(
+      positionBuffer,
+      velocityBuffer,
+      this.gravity,
+      this.friction,
+      this.bounce,
+      this.particleCount,
+    ));
 
-    const particle = particleBufferNode.element(instanceIndex);
-    const velocity = velocityBufferNode.element(instanceIndex);
+    const particlesMesh = this.makeParticlesMesh(
+      '/sprite1.png',
+      positionBuffer,
+      colorBuffer,
+      this.size,
+      this.particleCount,
+    );
+    scene.add(particlesMesh);
 
-    const limit = uniform(scaleVector);
+    const helper = new THREE.GridHelper(60, 40, 0x303030, 0x303030);
+    scene.add(helper);
 
-    //temp 함수는 셰이더 로직 내에서 특정 연산을 수행하기 위해 임시 변수를 생성하고, 이 변수를 통해 다양한 셰이더 연산을 체인(chain) 방식으로 적용할 수 있게 해줍니다.
-    const position = particle.add(velocity).temp();
+    const geometry = new THREE.PlaneGeometry(1000, 1000);
+    geometry.rotateX(-Math.PI / 2);
 
-    velocity.x = position.x.abs().greaterThanEqual(limit.x).cond(velocity.x.negate(), velocity.x);
-    velocity.y = position.y.abs().greaterThanEqual(limit.y).cond(velocity.y.negate(), velocity.y);
+    const plane = (this.plane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ visible: false })));
+    scene.add(plane);
 
-    position.assign(position.min(limit).max(limit.negate()));
+    renderer.compute(computeInitFn);
 
-    const pointer = uniform(pointerVector);
-    // const pointerSize = 0.1;
-    // const distanceFromPointer = pointer.sub(position).length();
+    this.computeMouseHit = this.computeMouseHitFunction(positionBuffer, velocityBuffer, this.particleCount);
 
-    particle.assign(position);
-  });
+    renderer.domElement.addEventListener('pointermove', this.onMouseMove);
 
-  // @ts-ignore
-  const computeNode = computeShaderFn().compute(particleNum);
-  computeNode.onInit = ({ renderer }: { renderer: WebGPURenderer }) => {
-    // @ts-ignore
-    const precomputeShaderNode = tslFn(() => {
-      const particleIndex = float(instanceIndex);
+    this.particlesRender(computeUpdateFn);
+  }
 
-      const randomAngle = particleIndex.mul(0.005).mul(Math.PI * 2);
-      const randomSpeed = particleIndex.mul(0.00001).add(0.0000001);
+  private onMouseMove = (event: MouseEvent) => {
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const camera = this.camera;
+    const plane = this.plane;
+    const clickPosition = this.clickPosition;
+    const renderer = this.renderer;
+    const computeMouseHit = this.computeMouseHit;
 
-      const velX = randomAngle.sin().mul(randomSpeed);
-      const velY = randomAngle.cos().mul(randomSpeed);
+    pointer.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
 
-      const velocity = velocityBufferNode.element(instanceIndex);
-      velocity.xy = vec2(velX, velY);
-    });
-    // @ts-ignore
-    renderer.compute(precomputeShaderNode().compute(particleNum));
+    raycaster.setFromCamera(pointer, camera);
+
+    const intersects = raycaster.intersectObjects([plane], false);
+
+    if (intersects.length > 0) {
+      const { point } = intersects[0];
+
+      // move to uniform
+
+      clickPosition.value.copy(point);
+      clickPosition.value.y = -1;
+
+      // compute
+
+      renderer.compute(computeMouseHit);
+    }
   };
 
-  const particleNode = attribute('particle', 'vec2');
+  private computeMouseHitFunction(
+    positionBuffer: ShaderNodeObject<StorageBufferNode>,
+    velocityBuffer: ShaderNodeObject<StorageBufferNode>,
+    particleCount: number,
+  ) {
+    return tslFn(() => {
+      const position = positionBuffer.element(instanceIndex);
+      const velocity = velocityBuffer.element(instanceIndex);
 
-  const pointsGeometry = new THREE.BufferGeometry();
-  pointsGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3)); // single vertex ( not triangle )
-  pointsGeometry.setAttribute('particle', particleBuffer); // dummy the position points as instances
-  pointsGeometry.drawRange.count = 1; // force render points as instances ( not triangle )
+      const dist = position.distance(this.clickPosition);
+      const direction = position.sub(this.clickPosition).normalize();
+      const distArea = float(6).sub(dist).max(0);
 
-  const pointsMaterial = new PointsNodeMaterial();
-  pointsMaterial.colorNode = particleNode.add(color(0xffffff));
-  pointsMaterial.positionNode = particleNode;
+      const power = distArea.mul(0.01);
+      const relativePower = power.mul(instanceIndex.hash().mul(0.5).add(0.5));
 
-  const mesh = new THREE.Points(pointsGeometry, pointsMaterial);
-  // @ts-ignore
-  mesh.isInstancedMesh = true;
-  // @ts-ignore
-  mesh.count = particleNum;
+      velocity.assign(velocity.add(direction.mul(relativePower)));
+    })().compute(particleCount);
+  }
 
-  return { mesh, computeNode };
-};
+  private computeInitFunction(
+    positionBuffer: ShaderNodeObject<StorageBufferNode>,
+    colorBuffer: ShaderNodeObject<StorageBufferNode>,
+    particleCount: number,
+  ) {
+    return tslFn(() => {
+      const position = positionBuffer.element(instanceIndex);
+      const color = colorBuffer.element(instanceIndex);
+
+      const ranX = instanceIndex.hash();
+      const ranY = instanceIndex.add(2).hash();
+      const ranZ = instanceIndex.add(3).hash();
+
+      position.x = ranX.mul(100).add(-50);
+      // @ts-ignore
+      position.y = 0;
+      position.z = ranZ.mul(100).add(-50);
+
+      color.assign(vec3(ranX, ranY, ranZ));
+    })().compute(particleCount);
+  }
+
+  private computeUpdateFunction(
+    positionBuffer: ShaderNodeObject<StorageBufferNode>,
+    velocityBuffer: ShaderNodeObject<StorageBufferNode>,
+    gravity: ShaderNodeObject<UniformNode<number>>,
+    friction: ShaderNodeObject<UniformNode<number>>,
+    bounce: ShaderNodeObject<UniformNode<number>>,
+    particleCount: number,
+  ) {
+    return tslFn(() => {
+      const position = positionBuffer.element(instanceIndex);
+      const velocity = velocityBuffer.element(instanceIndex);
+
+      velocity.assign(velocity.add(vec3(0.0, gravity, 0.0)).mul(friction));
+      position.assign(position.add(velocity));
+
+      If(position.y.lessThan(0), () => {
+        // @ts-ignore
+        position.y = 0;
+        velocity.y = velocity.y.negate().mul(bounce);
+
+        velocity.x = velocity.x.mul(0.9);
+        velocity.z = velocity.z.mul(0.9);
+      });
+    })().compute(particleCount);
+  }
+
+  private makeParticlesMesh(
+    texturePath: string,
+    positionBuffer: ShaderNodeObject<StorageBufferNode>,
+    colorBuffer: ShaderNodeObject<StorageBufferNode>,
+    size: ShaderNodeObject<UniformNode<number>>,
+    particleCount: number,
+  ) {
+    const textureLoader = new THREE.TextureLoader();
+    const map = textureLoader.load(texturePath);
+    const textureNode = texture(map);
+
+    const particleMaterial = new SpriteNodeMaterial();
+    particleMaterial.colorNode = textureNode.mul(colorBuffer.element(instanceIndex));
+    // @ts-ignore
+    particleMaterial.positionNode = positionBuffer.toAttribute();
+    particleMaterial.scaleNode = size;
+    particleMaterial.depthWrite = false;
+    particleMaterial.depthTest = true;
+    particleMaterial.transparent = true;
+
+    const particles = new Mesh(new THREE.PlaneGeometry(1, 1), particleMaterial);
+    // @ts-ignore
+    particles.isInstancedMesh = true;
+    // @ts-ignore
+    particles.count = particleCount;
+    particles.frustumCulled = false;
+
+    return particles;
+  }
+
+  private createBuffer(particleCount: number) {
+    return storage(new StorageInstancedBufferAttribute(particleCount, 3), 'vec3', particleCount);
+  }
+
+  private particlesRender(computeUpdateFn: ShaderNodeObject<ComputeNode>) {}
+}

@@ -2,15 +2,22 @@ import { Module } from '../module';
 import * as THREE from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { sceneFogNode, spaceWarp, spaceWarp2, spaceWrapPoints } from '../nodes';
+import { Particles, sceneFogNode } from '../nodes';
 import { waterNode } from '../nodes/water.ts';
+import Component from '@egjs/component';
 
-class DreamJourney {
+interface Event {
+  renderBefore: () => void;
+  renderAfter: () => void;
+}
+
+class DreamJourney extends Component<Event> {
   private readonly _canvas: HTMLCanvasElement;
   private readonly _container: HTMLDivElement;
   private _orbitControls?: OrbitControls;
 
   constructor(canvas: HTMLCanvasElement, container: HTMLDivElement) {
+    super();
     this._canvas = canvas;
     this._container = container;
   }
@@ -64,21 +71,15 @@ class DreamJourney {
     renderer.toneMappingExposure = 0.5;
 
     camera.position.set(0, 0, 10);
-    // camera.lookAt(0, 0, 0);
     controls.update();
 
-    const { wrapComputeNodes, wrapMeshes } = spaceWrapPoints(camera);
-
-    scene.add(...wrapMeshes);
-
-    const { mesh, computeNode } = spaceWarp(camera, new THREE.Vector3(1, 1, 1));
-
-    scene.add(mesh);
+    const particles = new Particles(scene, renderer, camera);
 
     renderer.setAnimationLoop(async () => {
-      await renderer.compute(computeNode);
-      await renderer.compute(wrapComputeNodes);
+      this.trigger('renderBefore');
+      renderer.compute(particles.computeParticles);
       this.render();
+      this.trigger('renderAfter');
     });
   }
 

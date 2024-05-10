@@ -19,6 +19,7 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
+    "@egjs/component": "^3.0.5",
     "three": "^0.164.1"
   }
 }
