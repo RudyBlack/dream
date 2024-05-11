@@ -19,6 +19,7 @@ import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.j
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 // @ts-ignore
 import StorageInstancedBufferAttribute from 'three/addons/renderers/common/StorageInstancedBufferAttribute.js';
+import DreamJourney from '../core';
 
 export class Particles {
   private readonly particleCount = 1000000;
@@ -27,16 +28,17 @@ export class Particles {
   private readonly friction = uniform(0.99);
   private readonly size = uniform(0.12);
   private clickPosition = uniform(new THREE.Vector3());
-
-  private plane: THREE.Mesh;
-
-  public readonly computeParticles: ShaderNodeObject<ComputeNode>;
   private camera: PerspectiveCamera;
   private renderer: WebGPURenderer;
+  private root: DreamJourney;
 
-  private computeMouseHit: ShaderNodeObject<ComputeNode>;
+  private static SPEED = 0.01;
 
-  constructor(scene: Scene, renderer: WebGPURenderer, camera: PerspectiveCamera) {
+  // public readonly computeUpdateFn: ShaderNodeObject<ComputeNode>;
+  public readonly computeMouseHit: ShaderNodeObject<ComputeNode>;
+
+  constructor(root: DreamJourney, scene: Scene, renderer: WebGPURenderer, camera: PerspectiveCamera) {
+    this.root = root;
     this.renderer = renderer;
     this.camera = camera;
     const positionBuffer = this.createBuffer(this.particleCount);
@@ -44,14 +46,16 @@ export class Particles {
     const colorBuffer = this.createBuffer(this.particleCount);
 
     const computeInitFn = this.computeInitFunction(positionBuffer, colorBuffer, this.particleCount);
-    const computeUpdateFn = (this.computeParticles = this.computeUpdateFunction(
+    const computeUpdateFn = this.computeUpdateFunction(
       positionBuffer,
       velocityBuffer,
       this.gravity,
       this.friction,
       this.bounce,
       this.particleCount,
-    ));
+    );
+
+    renderer.compute(computeInitFn);
 
     const particlesMesh = this.makeParticlesMesh(
       '/sprite1.png',
@@ -60,51 +64,22 @@ export class Particles {
       this.size,
       this.particleCount,
     );
+
     scene.add(particlesMesh);
-
-    const helper = new THREE.GridHelper(60, 40, 0x303030, 0x303030);
-    scene.add(helper);
-
-    const geometry = new THREE.PlaneGeometry(1000, 1000);
-    geometry.rotateX(-Math.PI / 2);
-
-    const plane = (this.plane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ visible: false })));
-    scene.add(plane);
-
-    renderer.compute(computeInitFn);
 
     this.computeMouseHit = this.computeMouseHitFunction(positionBuffer, velocityBuffer, this.particleCount);
 
-    renderer.domElement.addEventListener('pointermove', this.onMouseMove);
-
-    this.particlesRender(computeUpdateFn);
+    window.addEventListener('keydown', this.onParticleHitTriggerByKeyboard);
+    root.on('renderBefore', () => {
+      renderer.compute(computeUpdateFn);
+    });
   }
 
-  private onMouseMove = (event: MouseEvent) => {
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2();
-    const camera = this.camera;
-    const plane = this.plane;
-    const clickPosition = this.clickPosition;
+  private onParticleHitTriggerByKeyboard = (event: KeyboardEvent) => {
     const renderer = this.renderer;
     const computeMouseHit = this.computeMouseHit;
 
-    pointer.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
-
-    raycaster.setFromCamera(pointer, camera);
-
-    const intersects = raycaster.intersectObjects([plane], false);
-
-    if (intersects.length > 0) {
-      const { point } = intersects[0];
-
-      // move to uniform
-
-      clickPosition.value.copy(point);
-      clickPosition.value.y = -1;
-
-      // compute
-
+    if (event.code === 'KeyA') {
       renderer.compute(computeMouseHit);
     }
   };
@@ -120,15 +95,25 @@ export class Particles {
 
       const dist = position.distance(this.clickPosition);
       const direction = position.sub(this.clickPosition).normalize();
-      const distArea = float(6).sub(dist).max(0);
+      // 마우스 클릭 위치에서 100 유닛 이내의 거리에 있는 입자에만 영향을 미치도록 설정합니다. 입자가 100 유닛 이내에 있으면 distArea는 양수값을, 그 이상이면 0을 가집니다.
+      // .max(0)은 float(6).sub(dist) 값과 0중에서 큰걸 리턴
+      const distArea = float(100).sub(dist).max(0);
 
-      const power = distArea.mul(0.01);
-      const relativePower = power.mul(instanceIndex.hash().mul(0.5).add(0.5));
+      const power = distArea.mul(Particles.SPEED);
+      const relativePower = power.mul(float(instanceIndex).min(0).max(1).mul(0.5).add(0.5));
 
       velocity.assign(velocity.add(direction.mul(relativePower)));
     })().compute(particleCount);
   }
 
+  /**
+   * hash는 0,1 사이의 유사 랜덤값.
+   * position.x = ranX.mul(100).add(-50)는 ranX가 0과 1의 유사 랜덤값이고 100을 곱하면 0,100 사이의 유사 랜덤값이 된다. 그 후 -50을 더하므로 그 결과는 -50과 50 사이의 랜덤값이다.
+   * @param positionBuffer
+   * @param colorBuffer
+   * @param particleCount
+   * @private
+   */
   private computeInitFunction(
     positionBuffer: ShaderNodeObject<StorageBufferNode>,
     colorBuffer: ShaderNodeObject<StorageBufferNode>,
@@ -142,7 +127,7 @@ export class Particles {
       const ranY = instanceIndex.add(2).hash();
       const ranZ = instanceIndex.add(3).hash();
 
-      position.x = ranX.mul(100).add(-50);
+      position.x = ranX.mul(100).add(-50); //position.x는 -50부터 +50 사이의 값으로 설정
       // @ts-ignore
       position.y = 0;
       position.z = ranZ.mul(100).add(-50);
@@ -163,14 +148,18 @@ export class Particles {
       const position = positionBuffer.element(instanceIndex);
       const velocity = velocityBuffer.element(instanceIndex);
 
-      velocity.assign(velocity.add(vec3(0.0, gravity, 0.0)).mul(friction));
+      //이 코드는 속도 벡터에 중력을 y축 방향으로 적용한 후, 마찰 계수를 곱하여 전체 속도를 감속시킵니다.
+      // velocity.assign(velocity.add(vec3(0.0, gravity, 0.0)).mul(friction));
       position.assign(position.add(velocity));
 
       If(position.y.lessThan(0), () => {
         // @ts-ignore
         position.y = 0;
+
+        // y축 속도의 방향을 반대로 하고, 반발력을 곱하여 입자가 바닥에서 살짝 튀어오르도록 합니다.
         velocity.y = velocity.y.negate().mul(bounce);
 
+        // x축과 z축의 속도를 감소시켜, 마찰로 인한 수평 방향의 속도 감소를 모방합니다.
         velocity.x = velocity.x.mul(0.9);
         velocity.z = velocity.z.mul(0.9);
       });
@@ -190,6 +179,7 @@ export class Particles {
 
     const particleMaterial = new SpriteNodeMaterial();
     particleMaterial.colorNode = textureNode.mul(colorBuffer.element(instanceIndex));
+
     // @ts-ignore
     particleMaterial.positionNode = positionBuffer.toAttribute();
     particleMaterial.scaleNode = size;
@@ -210,6 +200,4 @@ export class Particles {
   private createBuffer(particleCount: number) {
     return storage(new StorageInstancedBufferAttribute(particleCount, 3), 'vec3', particleCount);
   }
-
-  private particlesRender(computeUpdateFn: ShaderNodeObject<ComputeNode>) {}
 }

@@ -73,11 +73,10 @@ class DreamJourney extends Component<Event> {
     camera.position.set(0, 0, 10);
     controls.update();
 
-    const particles = new Particles(scene, renderer, camera);
+    new Particles(this, scene, renderer, camera);
 
     renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
-      renderer.compute(particles.computeParticles);
       this.render();
       this.trigger('renderAfter');
     });
