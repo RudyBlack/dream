@@ -5,6 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Particles, sceneFogNode } from '../nodes';
 import { waterNode } from '../nodes/water.ts';
 import Component from '@egjs/component';
+import IceBox from '../module/IceBox.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -41,7 +42,7 @@ class DreamJourney extends Component<Event> {
   }
 
   public async init() {
-    this._renderer = new WebGPURenderer({ canvas: this._canvas, antialias: false });
+    this._renderer = new WebGPURenderer({ canvas: this._canvas, antialias: true });
     this._scene = new THREE.Scene();
     this._camera = new THREE.PerspectiveCamera(75, this._canvas.clientWidth / this._canvas.clientHeight, 1, 1000);
     this._orbitControls = new OrbitControls(this._camera, this._canvas);
@@ -67,15 +68,17 @@ class DreamJourney extends Component<Event> {
 
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.5;
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 6;
 
     camera.position.set(0, 0, 10);
     controls.update();
 
-    new Particles(this, scene, renderer, camera);
+    // new Particles(this, scene, renderer, camera);
 
-    renderer.setAnimationLoop(async () => {
+    await new IceBox().init({ canvas, camera, scene, renderer, container: this._container, orbitControls: controls });
+
+    await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
       this.render();
       this.trigger('renderAfter');
