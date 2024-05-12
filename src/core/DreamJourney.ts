@@ -7,6 +7,7 @@ import { waterNode } from '../nodes/water.ts';
 import Component from '@egjs/component';
 import IceBox from '../module/IceBox.ts';
 import Smoke from '../module/Smoke.ts';
+import AfterImage from '../module/AfterImage.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -54,18 +55,12 @@ class DreamJourney extends Component<Event> {
     const controls = this._orbitControls;
     const canvas = this._canvas;
 
-    const ambientLight = new THREE.AmbientLight(0xb0b0b0);
+    // const ambientLight = new THREE.AmbientLight(0xb0b0b0);
+    // const light = new THREE.DirectionalLight(0xffffff, 1.0);
+    // light.position.set(0.32, 0.39, 0.7);
 
-    const light = new THREE.DirectionalLight(0xffffff, 1.0);
-    light.position.set(0.32, 0.39, 0.7);
-
-    scene.add(ambientLight);
-    scene.add(light);
-
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    // this._scene.add(cube);
+    // scene.add(ambientLight);
+    // scene.add(light);
 
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -74,12 +69,8 @@ class DreamJourney extends Component<Event> {
 
     camera.position.set(0, 0, 10);
     controls.update();
-
-    // new Particles(this, scene, renderer, camera);
-
-    new Smoke().init({ canvas, camera, scene, renderer, container: this._container, orbitControls: controls });
-
-    // await new IceBox().init({ canvas, camera, scene, renderer, container: this._container, orbitControls: controls });
+    new Particles(this, scene, renderer, camera);
+    await this.setModule(new AfterImage());
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
@@ -97,7 +88,7 @@ class DreamJourney extends Component<Event> {
     const container = this._container!;
 
     const modulesPromise = modules.map((module) => {
-      return module.init({ canvas, camera, renderer, scene, orbitControls, container });
+      return module.init({ root: this, canvas, camera, renderer, scene, orbitControls, container });
     });
 
     return Promise.all(modulesPromise);
