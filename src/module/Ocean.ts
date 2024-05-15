@@ -1,152 +1,66 @@
+import { InitParam, Module } from './type.ts';
+import {
+  color,
+  depth,
+  depthTexture,
+  MeshBasicNodeMaterial,
+  mx_worley_noise_float,
+  positionWorld,
+  timerLocal,
+  vec2,
+  viewportDepthTexture,
+  viewportSharedTexture,
+  viewportTopLeft,
+} from 'three/examples/jsm/nodes/Nodes';
 import * as THREE from 'three';
 
-import Stats from 'three/addons/libs/stats.module.js';
+class Ocean implements Module {
+  async init(params: InitParam): Promise<void> {
+    const { renderer, camera, scene, canvas, orbitControls, root, container } = params;
 
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-import { Water } from 'three/addons/objects/Water.js';
-import { Sky } from 'three/addons/objects/Sky.js';
-import { InitParam, Module } from './type.ts';
-import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
-
-export class Ocean implements Module {
-  private _sun?: THREE.Vector3;
-  private _water?: Water;
-  private _stats?: Stats;
-  private _mesh?: THREE.Mesh;
-
-  private _renderer?: WebGPURenderer;
-  private _scene?: THREE.Scene;
-  private _camera?: THREE.PerspectiveCamera;
-
-  constructor() {}
-
-  public async init(params: InitParam) {
-    const { renderer, camera, scene, canvas, orbitControls, container } = params;
-    this._renderer = renderer;
-    this._scene = scene;
-    this._camera = camera;
-    const sun = this._sun!;
-    const water = this._water!;
-
-    this._sun = new THREE.Vector3();
-
-    // Water
-    const waterGeometry = new THREE.PlaneGeometry(10000, 10000);
-
-    this._water = new Water(waterGeometry, {
-      textureWidth: 512,
-      textureHeight: 512,
-      waterNormals: new THREE.TextureLoader().load('textures/waternormals.jpg', function (texture) {
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-      }),
-      sunDirection: new THREE.Vector3(),
-      sunColor: 0xffffff,
-      waterColor: 0x001e0f,
-      distortionScale: 3.7,
-      fog: scene.fog !== undefined,
-    });
-
-    this._water.rotation.x = -Math.PI / 2;
-
-    scene.add(this._water);
-
-    // Skybox
-
-    const sky = new Sky();
-    sky.scale.setScalar(10000);
-    scene.add(sky);
-
-    const skyUniforms = sky.material.uniforms;
-
-    skyUniforms['turbidity'].value = 10;
-    skyUniforms['rayleigh'].value = 2;
-    skyUniforms['mieCoefficient'].value = 0.005;
-    skyUniforms['mieDirectionalG'].value = 0.8;
-
-    const parameters = {
-      elevation: 2,
-      azimuth: 180,
-    };
-
-    // const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const sceneEnv = new THREE.Scene();
-
-    // const renderTarget = this._renderTarget;
-
-    function updateSun() {
-      const phi = THREE.MathUtils.degToRad(90 - parameters.elevation);
-      const theta = THREE.MathUtils.degToRad(parameters.azimuth);
-
-      sun.setFromSphericalCoords(1, phi, theta);
-
-      sky.material.uniforms['sunPosition'].value.copy(sun);
-      water.material.uniforms['sunDirection'].value.copy(sun).normalize();
-
-      // if (renderTarget !== undefined) renderTarget.dispose();
-
-      sceneEnv.add(sky);
-      // renderTarget = pmremGenerator.fromScene(sceneEnv);
-      scene.add(sky);
-
-      // scene.environment = renderTarget.texture;
-    }
-
-    updateSun();
-
-    //
-
-    const geometry = new THREE.BoxGeometry(30, 30, 30);
-    const material = new THREE.MeshStandardMaterial({ roughness: 0 });
-
-    const mesh = (this._mesh = new THREE.Mesh(geometry, material));
-    scene.add(mesh);
-
-    //
-
-    this._stats = new Stats();
-    container.appendChild(this._stats.dom);
-
-    // GUI
-
-    const gui = new GUI();
-
-    const folderSky = gui.addFolder('Sky');
-    folderSky.add(parameters, 'elevation', 0, 90, 0.1).onChange(updateSun);
-    folderSky.add(parameters, 'azimuth', -180, 180, 0.1).onChange(updateSun);
-    folderSky.open();
-
-    const waterUniforms = water.material.uniforms;
-
-    const folderWater = gui.addFolder('Water');
-    folderWater.add(waterUniforms.distortionScale, 'value', 0, 8, 0.1).name('distortionScale');
-    folderWater.add(waterUniforms.size, 'value', 0.1, 10, 0.1).name('size');
-    folderWater.open();
-
-    this.animate();
+    const water = this.makeWater();
+    scene.add(water);
   }
 
-  animate() {
-    requestAnimationFrame(this.animate);
-    this.render();
-    this._stats?.update();
-  }
+  private makeWater() {
+    const timer = timerLocal(0.3);
+    const floorUV = positionWorld;
 
-  render() {
-    const time = performance.now() * 0.001;
-    const mesh = this._mesh!;
-    const water = this._water!;
-    const renderer = this._renderer!;
-    const scene = this._scene!;
-    const camera = this._camera!;
+    const waterLayer0 = mx_worley_noise_float(floorUV.add(4).add(timer));
+    const waterLayer1 = mx_worley_noise_float(floorUV.mul(2).add(timer));
 
-    mesh.position.y = Math.sin(time) * 20 + 5;
-    mesh.rotation.x = time * 0.5;
-    mesh.rotation.z = time * 0.51;
+    const waterIntensity = waterLayer0.mul(waterLayer1);
+    const waterColor = waterIntensity.mul(1.4).mix(color(0x0487e2), color(0x74ccf4));
 
-    water.material.uniforms['time'].value += 1.0 / 60.0;
+    const depthWater = depthTexture(viewportDepthTexture());
+    const depthEffect = depthWater.remapClamp(-0.002, 0.04);
 
-    renderer.render(scene, camera);
+    const refractionUV = viewportTopLeft.add(vec2(0, waterIntensity.mul(0.1)));
+
+    const depthTestForRefraction = depthTexture(viewportDepthTexture(refractionUV)).sub(depth);
+
+    const depthRefraction = depthTestForRefraction.remapClamp(0, 0.1);
+
+    const finalUV = depthTestForRefraction.lessThan(0).cond(viewportTopLeft, refractionUV);
+
+    const viewportTexture = viewportSharedTexture(finalUV);
+
+    const waterMaterial = new MeshBasicNodeMaterial();
+    waterMaterial.colorNode = waterColor;
+    waterMaterial.backdropNode = depthEffect.mix(
+      viewportSharedTexture(),
+      viewportTexture.mul(depthRefraction.mix(1, waterColor)),
+    );
+    waterMaterial.backdropAlphaNode = depthRefraction.oneMinus();
+    waterMaterial.transparent = true;
+
+    const water = new THREE.Mesh(new THREE.BoxGeometry(50, 0.001, 50), waterMaterial);
+    water.position.set(0, 0, 0);
+
+    return water;
   }
 
   dispose(): void {}
 }
+
+export default Ocean;

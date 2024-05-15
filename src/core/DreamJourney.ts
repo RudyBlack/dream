@@ -9,6 +9,8 @@ import IceBox from '../module/IceBox.ts';
 import Smoke from '../module/Smoke.ts';
 import AfterImage from '../module/AfterImage.ts';
 import Reflection from '../module/Reflection.ts';
+import Ocean from '../module/Ocean.ts';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 
 interface Event {
   renderBefore: () => void;
@@ -45,34 +47,34 @@ class DreamJourney extends Component<Event> {
   }
 
   public async init() {
-    this._renderer = new WebGPURenderer({ canvas: this._canvas, antialias: true });
+    this._renderer = new WebGPURenderer({ canvas: this._canvas, antialias: false });
     this._scene = new THREE.Scene();
     this._camera = new THREE.PerspectiveCamera(60, this._canvas.clientWidth / this._canvas.clientHeight, 1, 5000);
     this._orbitControls = new OrbitControls(this._camera, this._canvas);
 
     const scene = this.scene;
+
     const renderer = this._renderer;
     const camera = this._camera;
     const controls = this._orbitControls;
     const canvas = this._canvas;
 
-    // const ambientLight = new THREE.AmbientLight(0xb0b0b0);
-    // const light = new THREE.DirectionalLight(0xffffff, 1.0);
-    // light.position.set(0.32, 0.39, 0.7);
+    new RGBELoader().setPath('textures/').load('syferfontein_1d_clear_puresky_1k.hdr', function (texture) {
+      texture.mapping = THREE.EquirectangularReflectionMapping;
 
-    // scene.add(ambientLight);
-    // scene.add(light);
+      scene.background = texture;
+      scene.environment = texture;
+      scene.backgroundIntensity = 0.03;
+    });
 
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.toneMapping = THREE.ReinhardToneMapping;
-    renderer.toneMappingExposure = 6;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
     camera.position.set(0, 5, 10);
-
     controls.update();
-    new Particles(this, scene, renderer, camera);
-    await this.setModule(new Reflection());
+
+    // await this.setModule(new Ocean());
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
