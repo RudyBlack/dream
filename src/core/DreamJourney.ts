@@ -73,16 +73,18 @@ class DreamJourney extends Component<Event> {
       // scene.backgroundBlurriness = 0.7;
     });
 
-    camera.position.set(30, 15, 30);
+    const cameraY = 10;
+
+    camera.position.set(0, cameraY, 0);
 
     //controls
-    controls.update();
 
-    controls.target.set(0, 2, 0);
+    controls.target.set(0.1, cameraY, 0);
     controls.minDistance = 7;
-    controls.maxDistance = 100;
-    controls.maxPolarAngle = Math.PI / 2;
-    controls.autoRotateSpeed = 0.1;
+    controls.maxDistance = 7;
+    controls.maxPolarAngle = Math.PI;
+
+    controls.update();
 
     await this.setModule(new Ground());
 
