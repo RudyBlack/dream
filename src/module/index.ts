@@ -4,3 +4,5 @@ export * from './IceBox.ts';
 export * from './Smoke.ts';
 export * from './AfterImage.ts';
 export * from './Reflection.ts';
+export * from './Ground.ts';
+export * from './Sky.ts';

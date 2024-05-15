@@ -2,7 +2,7 @@ import { Module } from '../module';
 import * as THREE from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { Particles, sceneFogNode } from '../nodes';
+import { Particles, sceneFogNode, sceneFogNode2 } from '../nodes';
 import { waterNode } from '../nodes/water.ts';
 import Component from '@egjs/component';
 import IceBox from '../module/IceBox.ts';
@@ -11,6 +11,7 @@ import AfterImage from '../module/AfterImage.ts';
 import Reflection from '../module/Reflection.ts';
 import Ocean from '../module/Ocean.ts';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
+import Ground from '../module/Ground.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -59,22 +60,31 @@ class DreamJourney extends Component<Event> {
     const controls = this._orbitControls;
     const canvas = this._canvas;
 
-    new RGBELoader().setPath('textures/').load('syferfontein_1d_clear_puresky_1k.hdr', function (texture) {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-
-      scene.background = texture;
-      scene.environment = texture;
-      scene.backgroundIntensity = 0.03;
-    });
-
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-    camera.position.set(0, 5, 10);
+    new RGBELoader().setPath('textures/').load('drakensberg_solitary_mountain_puresky_1k.hdr', function (texture) {
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+
+      scene.background = texture;
+      scene.environment = texture;
+      scene.backgroundIntensity = 0.05;
+      // scene.backgroundBlurriness = 0.7;
+    });
+
+    camera.position.set(30, 15, 30);
+
+    //controls
     controls.update();
 
-    // await this.setModule(new Ocean());
+    controls.target.set(0, 2, 0);
+    controls.minDistance = 7;
+    controls.maxDistance = 100;
+    controls.maxPolarAngle = Math.PI / 2;
+    controls.autoRotateSpeed = 0.1;
+
+    await this.setModule(new Ground());
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
