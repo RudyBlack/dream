@@ -8,6 +8,7 @@ import Component from '@egjs/component';
 import IceBox from '../module/IceBox.ts';
 import Smoke from '../module/Smoke.ts';
 import AfterImage from '../module/AfterImage.ts';
+import Reflection from '../module/Reflection.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -67,10 +68,11 @@ class DreamJourney extends Component<Event> {
     renderer.toneMapping = THREE.ReinhardToneMapping;
     renderer.toneMappingExposure = 6;
 
-    camera.position.set(0, 0, 10);
+    camera.position.set(0, 5, 10);
+
     controls.update();
     new Particles(this, scene, renderer, camera);
-    await this.setModule(new AfterImage());
+    await this.setModule(new Reflection());
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');

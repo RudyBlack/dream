@@ -22,7 +22,7 @@ import StorageInstancedBufferAttribute from 'three/addons/renderers/common/Stora
 import DreamJourney from '../core';
 
 export class Particles {
-  private readonly particleCount = 1000000;
+  private readonly particleCount = 100;
   private readonly gravity = uniform(-0.0098);
   private readonly bounce = uniform(0.8);
   private readonly friction = uniform(0.99);
