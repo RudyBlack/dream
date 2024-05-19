@@ -1,66 +1,91 @@
 import { InitParam, Module } from './type.ts';
+import * as THREE from 'three';
+import { RepeatWrapping, Scene } from 'three';
 import {
+  cameraFar,
+  cameraPosition,
+  cameraProjectionMatrix,
+  cameraViewMatrix,
   color,
-  depth,
-  depthTexture,
-  MeshBasicNodeMaterial,
-  mx_worley_noise_float,
+  dot,
+  max,
+  MeshStandardNodeMaterial,
+  modelViewPosition,
+  modelWorldMatrix,
+  normalize,
+  positionLocal,
+  positionView,
   positionWorld,
+  pow,
+  reflector,
+  texture,
   timerLocal,
   vec2,
-  viewportDepthTexture,
-  viewportSharedTexture,
-  viewportTopLeft,
+  vec3,
 } from 'three/examples/jsm/nodes/Nodes';
-import * as THREE from 'three';
+import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
+import { uv } from 'three/examples/jsm/nodes/accessors/UVNode';
 
 class Ocean implements Module {
+  private _scene?: Scene;
+
   async init(params: InitParam): Promise<void> {
+    this._scene = params.scene;
     const { renderer, camera, scene, canvas, orbitControls, root, container } = params;
 
-    const water = this.makeWater();
-    scene.add(water);
-  }
+    this.makeWater();
 
-  private makeWater() {
-    const timer = timerLocal(0.3);
-    const floorUV = positionWorld;
+    const cubeGeo = new THREE.BoxGeometry(10, 10);
+    const material = new THREE.MeshBasicMaterial({ color: 'green' });
+    const cube = new THREE.Mesh(cubeGeo, material);
 
-    const waterLayer0 = mx_worley_noise_float(floorUV.add(4).add(timer));
-    const waterLayer1 = mx_worley_noise_float(floorUV.mul(2).add(timer));
-
-    const waterIntensity = waterLayer0.mul(waterLayer1);
-    const waterColor = waterIntensity.mul(1.4).mix(color(0x0487e2), color(0x74ccf4));
-
-    const depthWater = depthTexture(viewportDepthTexture());
-    const depthEffect = depthWater.remapClamp(-0.002, 0.04);
-
-    const refractionUV = viewportTopLeft.add(vec2(0, waterIntensity.mul(0.1)));
-
-    const depthTestForRefraction = depthTexture(viewportDepthTexture(refractionUV)).sub(depth);
-
-    const depthRefraction = depthTestForRefraction.remapClamp(0, 0.1);
-
-    const finalUV = depthTestForRefraction.lessThan(0).cond(viewportTopLeft, refractionUV);
-
-    const viewportTexture = viewportSharedTexture(finalUV);
-
-    const waterMaterial = new MeshBasicNodeMaterial();
-    waterMaterial.colorNode = waterColor;
-    waterMaterial.backdropNode = depthEffect.mix(
-      viewportSharedTexture(),
-      viewportTexture.mul(depthRefraction.mix(1, waterColor)),
-    );
-    waterMaterial.backdropAlphaNode = depthRefraction.oneMinus();
-    waterMaterial.transparent = true;
-
-    const water = new THREE.Mesh(new THREE.BoxGeometry(50, 0.001, 50), waterMaterial);
-    water.position.set(0, 0, 0);
-
-    return water;
+    scene.add(cube);
+    cube.position.set(20, 7, -5);
   }
 
   dispose(): void {}
+
+  private makeWater() {
+    const scene = this._scene!;
+    const textureLoader = new THREE.TextureLoader();
+    const normalMap0 = textureLoader.load('textures/water/Water_1_M_Normal.jpg');
+    const normalMap1 = textureLoader.load('textures/water/Water_2_M_Normal.jpg');
+    normalMap0.wrapS = normalMap0.wrapT = RepeatWrapping;
+    normalMap1.wrapS = normalMap1.wrapT = RepeatWrapping;
+
+    const time = timerLocal();
+    const normalColor0 = texture(normalMap0, uv().add(time.mul(0.01)))
+      .mul(2.0)
+      .sub(1.0);
+    const normalColor1 = texture(normalMap1, uv().add(time.mul(0.001)))
+      .mul(2.0)
+      .sub(1.0);
+
+    const normalColor = normalColor0.mul(normalColor1);
+
+    const normal = normalize(vec3(normalColor.x, normalColor.z, normalColor.y));
+    const toEye = normalize(cameraPosition.sub(positionWorld.mul(0.3)));
+
+    const theta = max(dot(toEye, normal), 0.0);
+
+    /**
+     * 물 노멀벡터 즉 theta가 0이 될 수록 그 부분은 검은색
+     * 물 노멀방향과 카메라 위치가 수직을 이룰수록 물의 해당 부분이 검어짐
+     */
+
+    const reflectance = theta.clamp(0.1, Math.PI / 2);
+
+    const waterGeometry = new THREE.PlaneGeometry(100, 100);
+    const waterMaterial = new MeshStandardNodeMaterial();
+    const water = new THREE.Mesh(waterGeometry, waterMaterial);
+
+    const reflectColor = reflector({ target: water, resolution: 0.5, generateMipmaps: true });
+    reflectColor.uvNode = reflectColor.uvNode!.add(normalColor);
+
+    waterMaterial.colorNode = reflectColor.add(reflectance).mul(color(0x355f93));
+    water.rotation.x = -Math.PI / 2;
+    scene.add(water);
+  }
 }
 
 export default Ocean;

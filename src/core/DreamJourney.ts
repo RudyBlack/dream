@@ -12,6 +12,7 @@ import Reflection from '../module/Reflection.ts';
 import Ocean from '../module/Ocean.ts';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import Ground from '../module/Ground.ts';
+import { AmbientLight } from 'three';
 
 interface Event {
   renderBefore: () => void;
@@ -64,29 +65,23 @@ class DreamJourney extends Component<Event> {
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-    new RGBELoader().setPath('textures/').load('drakensberg_solitary_mountain_puresky_1k.hdr', function (texture) {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-
-      scene.background = texture;
-      scene.environment = texture;
-      scene.backgroundIntensity = 0.05;
-      // scene.backgroundBlurriness = 0.7;
-    });
-
-    const cameraY = 10;
+    const cameraY = 3;
 
     camera.position.set(0, cameraY, 0);
 
     //controls
-
     controls.target.set(0.1, cameraY, 0);
-    controls.minDistance = 7;
-    controls.maxDistance = 7;
+    // controls.minDistance = 1;
+    // controls.maxDistance = 1;
     controls.maxPolarAngle = Math.PI;
+
+    scene.add(new AmbientLight(0xffffff));
 
     controls.update();
 
-    await this.setModule(new Ground());
+    this.loadHDR();
+
+    await this.setModule(new Ocean());
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
@@ -108,6 +103,16 @@ class DreamJourney extends Component<Event> {
     });
 
     return Promise.all(modulesPromise);
+  }
+
+  private loadHDR() {
+    const scene = this.scene;
+    new RGBELoader().setPath('textures/').load('star_sky.hdr', function (texture) {
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+
+      scene.background = texture;
+      scene.environment = texture;
+    });
   }
 
   private setFog(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
