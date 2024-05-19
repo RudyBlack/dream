@@ -2,7 +2,7 @@ import { Module } from '../module';
 import * as THREE from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { Particles, sceneFogNode, sceneFogNode2 } from '../nodes';
+import { Particles, sceneFogNode, sceneFogNode2, spaceWarp, spaceWarp2, spaceWrapPoints } from '../nodes';
 import { waterNode } from '../nodes/water.ts';
 import Component from '@egjs/component';
 import IceBox from '../module/IceBox.ts';
@@ -12,7 +12,8 @@ import Reflection from '../module/Reflection.ts';
 import Ocean from '../module/Ocean.ts';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import Ground from '../module/Ground.ts';
-import { AmbientLight } from 'three';
+import { AmbientLight, Vector3 } from 'three';
+import Sky from '../module/Sky.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -79,9 +80,9 @@ class DreamJourney extends Component<Event> {
 
     controls.update();
 
-    this.loadHDR();
+    // this.loadHDR();
 
-    await this.setModule(new Ocean());
+    await this.setModule(new Ocean(), new Sky());
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
