@@ -12,7 +12,7 @@ import Reflection from '../module/Reflection.ts';
 import Ocean from '../module/Ocean.ts';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import Ground from '../module/Ground.ts';
-import { AmbientLight, Vector3 } from 'three';
+import { AmbientLight, Color, Vector3 } from 'three';
 import Sky from '../module/Sky.ts';
 
 interface Event {
@@ -71,14 +71,17 @@ class DreamJourney extends Component<Event> {
     camera.position.set(0, cameraY, 0);
 
     //controls
-    controls.target.set(0.1, cameraY, 0);
+    controls.target.set(0, cameraY, -0.01);
     // controls.minDistance = 1;
     // controls.maxDistance = 1;
     controls.maxPolarAngle = Math.PI;
 
+    scene.add(new THREE.AxesHelper(30));
     scene.add(new AmbientLight(0xffffff));
 
     controls.update();
+
+    scene.background = new Color(0x19254a);
 
     // this.loadHDR();
 

@@ -1,9 +1,16 @@
 import { InitParam, Module } from './type.ts';
 import {
+  cameraPosition,
+  color,
   ComputeNode,
   cos,
   If,
   instanceIndex,
+  mx_fractal_noise_float,
+  mx_fractal_noise_vec3,
+  mx_noise_vec3,
+  positionView,
+  positionWorld,
   ShaderNodeObject,
   sin,
   SpriteNodeMaterial,
@@ -26,6 +33,7 @@ import DreamJourney from '../core';
 import StorageInstancedBufferAttribute from 'three/addons/renderers/common/StorageInstancedBufferAttribute.js';
 import { randInt } from 'three/src/math/MathUtils';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
+import { mx_perlin_noise_vec3 } from 'three/examples/jsm/nodes/materialx/lib/mx_noise';
 
 class Sky implements Module {
   private readonly particleCount = 10000;
@@ -50,6 +58,7 @@ class Sky implements Module {
 
     // scene.add(new THREE.AxesHelper(50));
     this.setStarField();
+    this.setBackgroundGradient();
   }
 
   public setStarField() {
@@ -88,6 +97,14 @@ class Sky implements Module {
   }
 
   private setParticleStars() {}
+
+  private setBackgroundGradient() {
+    const scene = this.scene!;
+
+    const backgroundNode = vec3(0, 1, 0).sub(positionWorld).abs().mul(0.05).clamp(0, 1);
+    // @ts-ignore
+    scene.backgroundNode = color(0, 0, 1).mul(backgroundNode);
+  }
 
   /**
    * hash는 0,1 사이의 유사 랜덤값.

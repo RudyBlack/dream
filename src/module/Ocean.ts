@@ -34,13 +34,6 @@ class Ocean implements Module {
     const { renderer, camera, scene, canvas, orbitControls, root, container } = params;
 
     this.makeWater();
-
-    const cubeGeo = new THREE.BoxGeometry(10, 10);
-    const material = new THREE.MeshBasicMaterial({ color: 'green' });
-    const cube = new THREE.Mesh(cubeGeo, material);
-
-    scene.add(cube);
-    cube.position.set(20, 7, -5);
   }
 
   dispose(): void {}
