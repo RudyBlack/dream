@@ -94,7 +94,7 @@ class DreamJourney extends Component<Event> {
       }
     });
 
-    await this.setModule(new Ocean(), new Sky());
+    await this.setModule(new Ocean(), new Sky(), new Smoke());
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');

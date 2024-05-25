@@ -13,6 +13,7 @@
     "@types/three": "^0.164.0",
     "eslint": "^9.1.1",
     "eslint-config-prettier": "^9.1.0",
+    "lil-gui": "^0.19.2",
     "prettier": "3.2.5",
     "typescript": "^5.4.5",
     "typescript-eslint": "^7.7.1",

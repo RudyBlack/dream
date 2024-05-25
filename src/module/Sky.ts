@@ -1,18 +1,10 @@
 import { InitParam, Module } from './type.ts';
 import {
-  cameraPosition,
   color,
-  ComputeNode,
   cos,
-  If,
   instanceIndex,
   MeshStandardNodeMaterial,
-  mx_fractal_noise_float,
-  mx_fractal_noise_vec3,
-  mx_noise_vec3,
   positionLocal,
-  positionView,
-  positionWorld,
   ShaderNodeObject,
   sin,
   SpriteNodeMaterial,
@@ -24,7 +16,6 @@ import {
   uniform,
   UniformNode,
   vec3,
-  vec4,
 } from 'three/examples/jsm/nodes/Nodes';
 import * as THREE from 'three';
 import { Mesh, PerspectiveCamera, Scene, SphereGeometry } from 'three';
@@ -33,9 +24,8 @@ import DreamJourney from '../core';
 
 // @ts-ignore
 import StorageInstancedBufferAttribute from 'three/addons/renderers/common/StorageInstancedBufferAttribute.js';
-import { randInt } from 'three/src/math/MathUtils';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
-import { mx_perlin_noise_vec3 } from 'three/examples/jsm/nodes/materialx/lib/mx_noise';
+import Smoke from './Smoke.ts';
 
 class Sky implements Module {
   private readonly particleCount = 1000;
@@ -47,6 +37,7 @@ class Sky implements Module {
   private camera?: PerspectiveCamera;
   private renderer?: WebGPURenderer;
   private root?: DreamJourney;
+  private canvas?: HTMLCanvasElement;
 
   private static SPEED = 0.01;
 
@@ -57,10 +48,13 @@ class Sky implements Module {
     this.root = root;
     this.scene = scene;
     this.renderer = renderer;
+    this.camera = camera;
+    this.canvas = canvas;
 
     // scene.add(new THREE.AxesHelper(50));
     this.setStars();
     this.setBackgroundGradient();
+
     const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
     const bulbGeometry = new THREE.SphereGeometry(0.5, 16, 8);
     const bulbLight = new THREE.PointLight(0xa2f0ff, 1000, 100, 1.5);
@@ -115,7 +109,7 @@ class Sky implements Module {
     });
   }
 
-  private setParticleStars() {}
+  private setCloud() {}
 
   private setBackgroundGradient() {
     const scene = this.scene!;
