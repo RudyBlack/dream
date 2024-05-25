@@ -6,9 +6,11 @@ import {
   cos,
   If,
   instanceIndex,
+  MeshStandardNodeMaterial,
   mx_fractal_noise_float,
   mx_fractal_noise_vec3,
   mx_noise_vec3,
+  positionLocal,
   positionView,
   positionWorld,
   ShaderNodeObject,
@@ -25,7 +27,7 @@ import {
   vec4,
 } from 'three/examples/jsm/nodes/Nodes';
 import * as THREE from 'three';
-import { Mesh, PerspectiveCamera, Scene } from 'three';
+import { Mesh, PerspectiveCamera, Scene, SphereGeometry } from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer';
 import DreamJourney from '../core';
 
@@ -57,11 +59,25 @@ class Sky implements Module {
     this.renderer = renderer;
 
     // scene.add(new THREE.AxesHelper(50));
-    this.setStarField();
+    this.setStars();
     this.setBackgroundGradient();
+    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
+    const bulbGeometry = new THREE.SphereGeometry(0.02, 16, 8);
+    const bulbLight = new THREE.PointLight(0xffee88, 100, 100, 2);
+
+    const bulbMat = new THREE.MeshStandardMaterial({
+      emissive: 0xffffee,
+      emissiveIntensity: 1,
+      color: 0x000000,
+    });
+    bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat));
+    bulbLight.position.set(0, 2, -50);
+    bulbLight.castShadow = true;
+    scene.add(bulbLight);
+    scene.add(hemisphereLight);
   }
 
-  public setStarField() {
+  public setStars() {
     const renderer = this.renderer!;
     const scene = this.scene!;
     const positionBuffer = this.createBuffer(this.particleCount);
@@ -101,9 +117,19 @@ class Sky implements Module {
   private setBackgroundGradient() {
     const scene = this.scene!;
 
-    const backgroundNode = vec3(0, 1, 0).sub(positionWorld).abs().mul(0.05).clamp(0, 1);
-    // @ts-ignore
-    scene.backgroundNode = color(0, 0, 1).mul(backgroundNode);
+    const sphereGeo = new SphereGeometry(1, 100, 100);
+    const sphereNodeMat = new MeshStandardNodeMaterial();
+    const backgroundNode = vec3(0, 1, 0).sub(positionLocal).abs().mul(0.1).clamp(0, 1);
+
+    sphereNodeMat.colorNode = color(0, 0, 1).mul(backgroundNode);
+    sphereNodeMat.side = 1;
+    const sphere = new Mesh(sphereGeo, sphereNodeMat);
+
+    sphere.scale.setScalar(100);
+    scene.add(sphere);
+
+    // // @ts-ignore
+    // scene.backgroundNode = color(0, 0, 1).mul(backgroundNode);
   }
 
   /**
