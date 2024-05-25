@@ -38,7 +38,7 @@ import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 import { mx_perlin_noise_vec3 } from 'three/examples/jsm/nodes/materialx/lib/mx_noise';
 
 class Sky implements Module {
-  private readonly particleCount = 10000;
+  private readonly particleCount = 1000;
   private readonly gravity = uniform(-0.0098);
   private readonly bounce = uniform(0.8);
   private readonly friction = uniform(0.99);
@@ -62,17 +62,20 @@ class Sky implements Module {
     this.setStars();
     this.setBackgroundGradient();
     const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
-    const bulbGeometry = new THREE.SphereGeometry(0.02, 16, 8);
-    const bulbLight = new THREE.PointLight(0xffee88, 100, 100, 2);
+    const bulbGeometry = new THREE.SphereGeometry(0.5, 16, 8);
+    const bulbLight = new THREE.PointLight(0xa2f0ff, 1000, 100, 1.5);
 
     const bulbMat = new THREE.MeshStandardMaterial({
       emissive: 0xffffee,
-      emissiveIntensity: 1,
-      color: 0x000000,
+      emissiveIntensity: 10,
     });
-    bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat));
-    bulbLight.position.set(0, 2, -50);
-    bulbLight.castShadow = true;
+
+    const moon = new THREE.Mesh(bulbGeometry, bulbMat);
+    bulbMat.opacity = 0.5;
+
+    bulbLight.add(moon);
+    bulbLight.position.set(0, 5, -45);
+
     scene.add(bulbLight);
     scene.add(hemisphereLight);
   }
@@ -161,7 +164,7 @@ class Sky implements Module {
       const z = sin(theta).mul(sin(phi));
 
       // 반경 조정을 위해 모든 좌표에 반경을 곱합니다.
-      const radius = 100; // 반경 설정
+      const radius = 50; // 반경 설정
 
       position.x = x.mul(radius);
       position.y = y.mul(radius);
