@@ -70,7 +70,6 @@ class DreamJourney extends Component<Event> {
 
     camera.position.set(0, cameraY, 0);
 
-    //controls
     controls.target.set(0, cameraY, -0.01);
     // controls.minDistance = 1;
     // controls.maxDistance = 1;
@@ -83,7 +82,17 @@ class DreamJourney extends Component<Event> {
 
     scene.background = new Color(0x19254a);
 
-    // this.loadHDR();
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Digit1') {
+        camera.position.set(0, cameraY, 0);
+        controls.target.set(0, cameraY, -0.01);
+      }
+
+      if (e.code === 'Digit2') {
+        camera.position.set(-122, 81, 118);
+        controls.target.set(0, 3, -0.01);
+      }
+    });
 
     await this.setModule(new Ocean(), new Sky());
 
