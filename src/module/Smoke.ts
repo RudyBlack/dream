@@ -3,14 +3,22 @@ import * as THREE from 'three';
 import {
   cameraPosition,
   color,
+  If,
   instanceIndex,
   max,
+  min,
   mix,
+  modelPosition,
+  modelViewPosition,
+  modelViewProjection,
+  modelWorldMatrix,
+  Node,
   positionGeometry,
   positionLocal,
   positionView,
   positionWorld,
   range,
+  ShaderNodeObject,
   SpriteNodeMaterial,
   texture,
   timerLocal,
@@ -22,6 +30,8 @@ import GUI from 'lil-gui';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 
 class Smoke implements Module {
+  private static instanceCount = 10;
+
   init(params: InitParam): Promise<void> {
     const { canvas, container, camera, renderer, scene, orbitControls } =
       params;
@@ -29,10 +39,11 @@ class Smoke implements Module {
     // camera.position.z = 300;
     const map = Smoke.loadTexture();
 
-    const cloud1 = Smoke.makeCloud(map, scene);
-    cloud1.rotation.z = Math.PI / 2;
-    cloud1.position.z = -50;
+    const cloud1 = Smoke.makeCloud(map, scene, 'left');
+    const cloud2 = Smoke.makeCloud(map, scene, 'right');
+
     cloud1.position.set(0, 5, -50);
+    cloud2.position.set(0, 5, -50);
 
     const gui = new GUI();
     gui.add(cloud1.position, 'x');
@@ -41,9 +52,11 @@ class Smoke implements Module {
     return Promise.resolve(undefined);
   }
 
-  private static makeCloud(map: Texture, scene: Scene) {
-    const { positionNode, scaleNode, colorNode, opacityNode } =
-      Smoke.makeNodes(map);
+  private static makeCloud(map: Texture, scene: Scene, type: 'left' | 'right') {
+    const { positionNode, scaleNode, colorNode, opacityNode } = Smoke.makeNodes(
+      map,
+      type,
+    );
 
     const smokeNodeMaterial = new SpriteNodeMaterial();
     smokeNodeMaterial.colorNode = colorNode;
@@ -56,7 +69,7 @@ class Smoke implements Module {
     const smokeInstancedSprite = new THREE.InstancedMesh(
       new THREE.PlaneGeometry(1, 1),
       smokeNodeMaterial,
-      1,
+      Smoke.instanceCount,
     );
     smokeInstancedSprite.scale.setScalar(100);
 
@@ -64,12 +77,13 @@ class Smoke implements Module {
     return smokeInstancedSprite;
   }
 
-  private static makeNodes(map: Texture) {
-    const offsetRange = vec3(0, 3, 0);
+  private static makeNodes(map: Texture, type: 'left' | 'right') {
+    const offsetRange =
+      type === 'right'
+        ? vec3(float(instanceIndex.mul(2)), 0, 0)
+        : vec3(float(instanceIndex.mul(2)).negate(), 0, 0);
     const scaleRange = float(0.3);
     const rotateRange = float(0.5);
-
-    const timer = timerLocal(0.005, 5);
 
     const smokeColor = mix(
       color(0x2c1501),
@@ -77,11 +91,7 @@ class Smoke implements Module {
       positionLocal.y.mul(3).clamp(0.5, 1),
     );
 
-    const distance = cameraPosition.z.sub(positionWorld.z).mul(0.01);
-    const opacity = mix(0, 1, distance);
-
-    const textureNode = texture(map, uv().rotateUV(timer.mul(rotateRange)));
-    const opacityNode = textureNode.a.mul(opacity);
+    const opacityNode = Smoke.makeOpacityNode(map, type);
     const colorNode = mix(color(0x0195f2), smokeColor, float(0.5));
     const positionNode = offsetRange.mul(0.1);
     const scaleNode = scaleRange;
@@ -92,6 +102,21 @@ class Smoke implements Module {
       scaleNode,
       opacityNode,
     };
+  }
+
+  private static makeOpacityNode(map: Texture, type: 'left' | 'right') {
+    function nodeSum(node: ShaderNodeObject<Node>) {
+      return node.x
+        .mul(0.2)
+        .add(node.y.abs().mul(0.01))
+        .add(node.z.abs().mul(0.01));
+    }
+
+    const f = positionWorld.add(instanceIndex.mul(100)).mul(0.05).abs();
+
+    const textureNode = texture(map, uv());
+    const opacityNode = textureNode.a.mul(nodeSum(f).clamp(0, 2));
+    return opacityNode;
   }
 
   private static loadTexture() {
