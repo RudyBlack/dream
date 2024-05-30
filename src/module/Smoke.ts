@@ -90,9 +90,11 @@ class Smoke implements Module {
       positionGeometry.y.mul(3).clamp(0.5, 1),
     );
 
+    const timer = timerLocal(0.003, 0.5);
+
     const opacityNode = Smoke.makeOpacityNode(map);
     const colorNode = mix(color(0x0195f2), smokeColor, float(0.5));
-    const positionNode = offsetRange.mul(0.1);
+    const positionNode = offsetRange.mul(0.1).mul(timer);
     const scaleNode = float(scaleRange);
 
     return {
