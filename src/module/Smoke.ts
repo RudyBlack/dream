@@ -82,19 +82,18 @@ class Smoke implements Module {
       type === 'right'
         ? vec3(float(instanceIndex.mul(2)), 0, 0)
         : vec3(float(instanceIndex.mul(2)).negate(), 0, 0);
-    const scaleRange = float(0.3);
-    const rotateRange = float(0.5);
+    const scaleRange = range(0.25, 0.5);
 
     const smokeColor = mix(
       color(0x2c1501),
       color(0x222222),
-      positionLocal.y.mul(3).clamp(0.5, 1),
+      positionGeometry.y.mul(3).clamp(0.5, 1),
     );
 
-    const opacityNode = Smoke.makeOpacityNode(map, type);
+    const opacityNode = Smoke.makeOpacityNode(map);
     const colorNode = mix(color(0x0195f2), smokeColor, float(0.5));
     const positionNode = offsetRange.mul(0.1);
-    const scaleNode = scaleRange;
+    const scaleNode = float(scaleRange);
 
     return {
       positionNode,
@@ -104,7 +103,7 @@ class Smoke implements Module {
     };
   }
 
-  private static makeOpacityNode(map: Texture, type: 'left' | 'right') {
+  private static makeOpacityNode(map: Texture) {
     function nodeSum(node: ShaderNodeObject<Node>) {
       return node.x
         .mul(0.2)
@@ -112,9 +111,10 @@ class Smoke implements Module {
         .add(node.z.abs().mul(0.01));
     }
 
+    const rotateRange = range(1, 1.2);
     const f = positionWorld.add(instanceIndex.mul(100)).mul(0.05).abs();
 
-    const textureNode = texture(map, uv());
+    const textureNode = texture(map, uv().mul(rotateRange));
     const opacityNode = textureNode.a.mul(nodeSum(f).clamp(0, 2));
     return opacityNode;
   }
