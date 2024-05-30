@@ -36,7 +36,6 @@ class Smoke implements Module {
     const { canvas, container, camera, renderer, scene, orbitControls } =
       params;
 
-    // camera.position.z = 300;
     const map = Smoke.loadTexture();
 
     const cloud1 = Smoke.makeCloud(map, scene, 'left');

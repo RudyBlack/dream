@@ -25,7 +25,6 @@ import DreamJourney from '../core';
 // @ts-ignore
 import StorageInstancedBufferAttribute from 'three/addons/renderers/common/StorageInstancedBufferAttribute.js';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
-import Smoke from './Smoke.ts';
 
 class Sky implements Module {
   private readonly particleCount = 1000;
@@ -53,7 +52,7 @@ class Sky implements Module {
 
     // scene.add(new THREE.AxesHelper(50));
     this.setStars();
-    this.setBackgroundGradient();
+    this.setSceneSphere();
 
     const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
     const bulbGeometry = new THREE.SphereGeometry(0.5, 16, 8);
@@ -81,7 +80,11 @@ class Sky implements Module {
     const velocityBuffer = this.createBuffer(this.particleCount);
     const colorBuffer = this.createBuffer(this.particleCount);
 
-    const computeInitFn = this.computeInitFunction(positionBuffer, colorBuffer, this.particleCount);
+    const computeInitFn = this.computeInitFunction(
+      positionBuffer,
+      colorBuffer,
+      this.particleCount,
+    );
     const computeUpdateFn = this.computeUpdateFunction(
       positionBuffer,
       velocityBuffer,
@@ -109,14 +112,16 @@ class Sky implements Module {
     });
   }
 
-  private setCloud() {}
-
-  private setBackgroundGradient() {
+  private setSceneSphere() {
     const scene = this.scene!;
 
-    const sphereGeo = new SphereGeometry(1, 100, 100);
+    const sphereGeo = new SphereGeometry(5, 100, 100);
     const sphereNodeMat = new MeshStandardNodeMaterial();
-    const backgroundNode = vec3(0, 1, 0).sub(positionLocal).abs().mul(0.1).clamp(0, 1);
+    const backgroundNode = vec3(0, 1, 0)
+      .sub(positionLocal)
+
+      .mul(0.03)
+      .clamp(0, 1);
 
     sphereNodeMat.colorNode = color(0, 0, 1).mul(backgroundNode);
     sphereNodeMat.side = 1;
@@ -124,9 +129,6 @@ class Sky implements Module {
 
     sphere.scale.setScalar(100);
     scene.add(sphere);
-
-    // // @ts-ignore
-    // scene.backgroundNode = color(0, 0, 1).mul(backgroundNode);
   }
 
   /**
@@ -182,7 +184,11 @@ class Sky implements Module {
 
       const time = timerLocal(2);
 
-      color.xyz = vec3(cos(time.add(instanceIndex)), cos(time.add(instanceIndex)), cos(time.add(instanceIndex)));
+      color.xyz = vec3(
+        cos(time.add(instanceIndex)),
+        cos(time.add(instanceIndex)),
+        cos(time.add(instanceIndex)),
+      );
     })().compute(particleCount);
   }
 
@@ -198,7 +204,9 @@ class Sky implements Module {
     const textureNode = texture(map);
 
     const particleMaterial = new SpriteNodeMaterial();
-    particleMaterial.colorNode = textureNode.mul(colorBuffer.element(instanceIndex));
+    particleMaterial.colorNode = textureNode.mul(
+      colorBuffer.element(instanceIndex),
+    );
 
     // @ts-ignore
     particleMaterial.positionNode = positionBuffer.toAttribute();
@@ -219,7 +227,11 @@ class Sky implements Module {
   }
 
   private createBuffer(particleCount: number) {
-    return storage(new StorageInstancedBufferAttribute(particleCount, 3), 'vec3', particleCount);
+    return storage(
+      new StorageInstancedBufferAttribute(particleCount, 3),
+      'vec3',
+      particleCount,
+    );
   }
 
   dispose(): void {}

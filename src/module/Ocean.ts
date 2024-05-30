@@ -2,28 +2,18 @@ import { InitParam, Module } from './type.ts';
 import * as THREE from 'three';
 import { RepeatWrapping, Scene } from 'three';
 import {
-  cameraFar,
   cameraPosition,
-  cameraProjectionMatrix,
-  cameraViewMatrix,
   color,
   dot,
   max,
   MeshStandardNodeMaterial,
-  modelViewPosition,
-  modelWorldMatrix,
   normalize,
-  positionLocal,
-  positionView,
   positionWorld,
-  pow,
   reflector,
   texture,
   timerLocal,
-  vec2,
   vec3,
 } from 'three/examples/jsm/nodes/Nodes';
-import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 import { uv } from 'three/examples/jsm/nodes/accessors/UVNode';
 
 class Ocean implements Module {
@@ -31,7 +21,8 @@ class Ocean implements Module {
 
   async init(params: InitParam): Promise<void> {
     this._scene = params.scene;
-    const { renderer, camera, scene, canvas, orbitControls, root, container } = params;
+    const { renderer, camera, scene, canvas, orbitControls, root, container } =
+      params;
 
     this.makeWater();
   }
@@ -41,8 +32,12 @@ class Ocean implements Module {
   private makeWater() {
     const scene = this._scene!;
     const textureLoader = new THREE.TextureLoader();
-    const normalMap0 = textureLoader.load('textures/water/Water_1_M_Normal.jpg');
-    const normalMap1 = textureLoader.load('textures/water/Water_2_M_Normal.jpg');
+    const normalMap0 = textureLoader.load(
+      'textures/water/Water_1_M_Normal.jpg',
+    );
+    const normalMap1 = textureLoader.load(
+      'textures/water/Water_2_M_Normal.jpg',
+    );
     normalMap0.wrapS = normalMap0.wrapT = RepeatWrapping;
     normalMap1.wrapS = normalMap1.wrapT = RepeatWrapping;
 
@@ -68,14 +63,20 @@ class Ocean implements Module {
 
     const reflectance = theta.clamp(0.1, Math.PI / 2);
 
-    const waterGeometry = new THREE.PlaneGeometry(100, 100);
+    const waterGeometry = new THREE.PlaneGeometry(1000, 1000);
     const waterMaterial = new MeshStandardNodeMaterial();
     const water = new THREE.Mesh(waterGeometry, waterMaterial);
 
-    const reflectColor = reflector({ target: water, resolution: 0.5, generateMipmaps: true });
+    const reflectColor = reflector({
+      target: water,
+      resolution: 0.5,
+      generateMipmaps: true,
+    });
     reflectColor.uvNode = reflectColor.uvNode!.add(normalColor);
 
-    waterMaterial.colorNode = reflectColor.add(reflectance).mul(color(0x355f93));
+    waterMaterial.colorNode = reflectColor
+      .add(reflectance)
+      .mul(color(0x355f93));
     water.rotation.x = -Math.PI / 2;
     scene.add(water);
   }
