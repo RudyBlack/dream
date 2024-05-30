@@ -4,7 +4,7 @@ import { AmbientLight, Color } from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Component from '@egjs/component';
-import Smoke from '../module/Smoke.ts';
+import Cloud from '../module/Cloud.ts';
 import Ocean from '../module/Ocean.ts';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import Sky from '../module/Sky.ts';
@@ -96,7 +96,7 @@ class DreamJourney extends Component<Event> {
       }
     });
 
-    await this.setModule(new Ocean(), new Sky(), new Smoke());
+    await this.setModule(new Ocean(), new Sky(), new Cloud());
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');

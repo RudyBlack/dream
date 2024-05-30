@@ -5,6 +5,7 @@ import {
   color,
   If,
   instanceIndex,
+  int,
   max,
   min,
   mix,
@@ -29,30 +30,32 @@ import { Scene, Texture, Vector3 } from 'three';
 import GUI from 'lil-gui';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 
-class Smoke implements Module {
+const SKY_POSITION_Z = -400;
+
+class Cloud implements Module {
   private static instanceCount = 10;
 
   init(params: InitParam): Promise<void> {
     const { canvas, container, camera, renderer, scene, orbitControls } =
       params;
 
-    const map = Smoke.loadTexture();
+    const map = Cloud.loadTexture();
 
-    const cloud1 = Smoke.makeCloud(map, scene, 'left');
-    const cloud2 = Smoke.makeCloud(map, scene, 'right');
+    const cloud1 = Cloud.makeCloud(map, scene, 'left');
+    const cloud2 = Cloud.makeCloud(map, scene, 'right');
 
-    cloud1.position.set(0, 5, -50);
-    cloud2.position.set(0, 5, -50);
+    cloud1.position.set(-5, 5, SKY_POSITION_Z);
+    cloud2.position.set(5, 5, SKY_POSITION_Z);
 
-    const gui = new GUI();
-    gui.add(cloud1.position, 'x');
-    gui.add(cloud1.position, 'y');
-    gui.add(cloud1.position, 'z');
+    // const gui = new GUI();
+    // gui.add(cloud1.position, 'x');
+    // gui.add(cloud1.position, 'y');
+    // gui.add(cloud1.position, 'z');
     return Promise.resolve(undefined);
   }
 
   private static makeCloud(map: Texture, scene: Scene, type: 'left' | 'right') {
-    const { positionNode, scaleNode, colorNode, opacityNode } = Smoke.makeNodes(
+    const { positionNode, scaleNode, colorNode, opacityNode } = Cloud.makeNodes(
       map,
       type,
     );
@@ -68,7 +71,7 @@ class Smoke implements Module {
     const smokeInstancedSprite = new THREE.InstancedMesh(
       new THREE.PlaneGeometry(1, 1),
       smokeNodeMaterial,
-      Smoke.instanceCount,
+      Cloud.instanceCount,
     );
     smokeInstancedSprite.scale.setScalar(100);
 
@@ -79,9 +82,9 @@ class Smoke implements Module {
   private static makeNodes(map: Texture, type: 'left' | 'right') {
     const offsetRange =
       type === 'right'
-        ? vec3(float(instanceIndex.mul(2)), 0, 0)
-        : vec3(float(instanceIndex.mul(2)).negate(), 0, 0);
-    const scaleRange = range(0.25, 0.5);
+        ? vec3(float(instanceIndex.mul(instanceIndex)), 0, 0)
+        : vec3(float(instanceIndex.mul(instanceIndex)).negate(), 0, 0);
+    const scaleRange = range(0.25, 0.5).mul(instanceIndex);
 
     const smokeColor = mix(
       color(0x2c1501),
@@ -91,7 +94,7 @@ class Smoke implements Module {
 
     const timer = timerLocal(0.003, 0.5);
 
-    const opacityNode = Smoke.makeOpacityNode(map);
+    const opacityNode = Cloud.makeOpacityNode(map);
     const colorNode = mix(color(0x0195f2), smokeColor, float(0.5));
     const positionNode = offsetRange.mul(0.1).mul(timer);
     const scaleNode = float(scaleRange);
@@ -129,4 +132,4 @@ class Smoke implements Module {
   dispose(): void {}
 }
 
-export default Smoke;
+export default Cloud;

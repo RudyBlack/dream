@@ -25,6 +25,7 @@ import DreamJourney from '../core';
 // @ts-ignore
 import StorageInstancedBufferAttribute from 'three/addons/renderers/common/StorageInstancedBufferAttribute.js';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
+import GUI from 'lil-gui';
 
 class Sky implements Module {
   private readonly particleCount = 1000;
@@ -55,8 +56,8 @@ class Sky implements Module {
     this.setSceneSphere();
 
     const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
-    const bulbGeometry = new THREE.SphereGeometry(0.5, 16, 8);
-    const bulbLight = new THREE.PointLight(0xa2f0ff, 1000, 100, 1.5);
+    const bulbGeometry = new THREE.SphereGeometry(2, 16, 8);
+    const bulbLight = new THREE.PointLight(0xa2f0ff, 3500, 1000, 1.2);
 
     const bulbMat = new THREE.MeshStandardMaterial({
       emissive: 0xffffee,
@@ -64,13 +65,18 @@ class Sky implements Module {
     });
 
     const moon = new THREE.Mesh(bulbGeometry, bulbMat);
-    bulbMat.opacity = 0.5;
+    bulbMat.opacity = 0.8;
 
     bulbLight.add(moon);
-    bulbLight.position.set(0, 5, -45);
+    bulbLight.position.set(0, 50, -400);
 
     scene.add(bulbLight);
     scene.add(hemisphereLight);
+
+    const gui = new GUI();
+    gui.add(bulbLight, 'decay');
+    gui.add(bulbLight, 'distance');
+    gui.add(bulbLight, 'intensity');
   }
 
   public setStars() {
