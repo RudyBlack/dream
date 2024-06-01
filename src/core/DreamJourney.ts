@@ -8,6 +8,7 @@ import Cloud from '../module/Cloud.ts';
 import Ocean from '../module/Ocean.ts';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import Sky from '../module/Sky.ts';
+import Moon from '../module/Moon.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -96,7 +97,7 @@ class DreamJourney extends Component<Event> {
       }
     });
 
-    await this.setModule(new Ocean(), new Sky(), new Cloud());
+    await this.setModule(new Ocean(), new Sky(), new Cloud(), new Moon());
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');

@@ -7,6 +7,7 @@ import {
   instanceIndex,
   int,
   max,
+  MeshStandardNodeMaterial,
   min,
   mix,
   modelPosition,
@@ -33,7 +34,7 @@ import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 const SKY_POSITION_Z = -400;
 
 class Cloud implements Module {
-  private static instanceCount = 10;
+  private static instanceCount = 1;
 
   init(params: InitParam): Promise<void> {
     const { canvas, container, camera, renderer, scene, orbitControls } =
@@ -44,13 +45,9 @@ class Cloud implements Module {
     const cloud1 = Cloud.makeCloud(map, scene, 'left');
     const cloud2 = Cloud.makeCloud(map, scene, 'right');
 
-    cloud1.position.set(-5, 5, SKY_POSITION_Z);
-    cloud2.position.set(5, 5, SKY_POSITION_Z);
+    cloud1.position.set(-250, 100, SKY_POSITION_Z);
+    cloud2.position.set(250, 50, SKY_POSITION_Z);
 
-    // const gui = new GUI();
-    // gui.add(cloud1.position, 'x');
-    // gui.add(cloud1.position, 'y');
-    // gui.add(cloud1.position, 'z');
     return Promise.resolve(undefined);
   }
 
@@ -60,21 +57,22 @@ class Cloud implements Module {
       type,
     );
 
-    const smokeNodeMaterial = new SpriteNodeMaterial();
+    const smokeNodeMaterial = new MeshStandardNodeMaterial();
     smokeNodeMaterial.colorNode = colorNode;
-    smokeNodeMaterial.positionNode = positionNode;
+
     smokeNodeMaterial.opacityNode = opacityNode;
-    smokeNodeMaterial.scaleNode = scaleNode;
+
     smokeNodeMaterial.depthWrite = false;
     smokeNodeMaterial.transparent = true;
+    smokeNodeMaterial.depthFunc = 1;
 
     const smokeInstancedSprite = new THREE.InstancedMesh(
       new THREE.PlaneGeometry(1, 1),
       smokeNodeMaterial,
       Cloud.instanceCount,
     );
-    smokeInstancedSprite.scale.setScalar(100);
 
+    smokeInstancedSprite.scale.setScalar(200);
     scene.add(smokeInstancedSprite);
     return smokeInstancedSprite;
   }
@@ -82,14 +80,14 @@ class Cloud implements Module {
   private static makeNodes(map: Texture, type: 'left' | 'right') {
     const offsetRange =
       type === 'right'
-        ? vec3(float(instanceIndex.mul(instanceIndex)), 0, 0)
-        : vec3(float(instanceIndex.mul(instanceIndex)).negate(), 0, 0);
-    const scaleRange = range(0.25, 0.5).mul(instanceIndex);
+        ? vec3(float(instanceIndex), 0, 0)
+        : vec3(float(instanceIndex.mul(instanceIndex)).negate(), 5, 0);
+    const scaleRange = range(2.5, 5);
 
     const smokeColor = mix(
       color(0x2c1501),
       color(0x222222),
-      positionGeometry.y.mul(3).clamp(0.5, 1),
+      positionWorld.y.mul(3).clamp(0.5, 1),
     );
 
     const timer = timerLocal(0.003, 0.5);
@@ -116,10 +114,11 @@ class Cloud implements Module {
     }
 
     const rotateRange = range(1, 1.2);
-    const f = positionWorld.add(instanceIndex.mul(100)).mul(0.05).abs();
+    const f = positionWorld.add(instanceIndex.mul(100)).mul(0.05);
 
     const textureNode = texture(map, uv().mul(rotateRange));
-    const opacityNode = textureNode.a.mul(nodeSum(f).clamp(0, 2));
+    // const opacityNode = textureNode.a.mul(nodeSum(f).clamp(0, 1));
+    const opacityNode = textureNode.a.mul(1);
     return opacityNode;
   }
 

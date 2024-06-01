@@ -54,29 +54,6 @@ class Sky implements Module {
     // scene.add(new THREE.AxesHelper(50));
     this.setStars();
     this.setSceneSphere();
-
-    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
-    const bulbGeometry = new THREE.SphereGeometry(2, 16, 8);
-    const bulbLight = new THREE.PointLight(0xa2f0ff, 3500, 1000, 1.2);
-
-    const bulbMat = new THREE.MeshStandardMaterial({
-      emissive: 0xffffee,
-      emissiveIntensity: 10,
-    });
-
-    const moon = new THREE.Mesh(bulbGeometry, bulbMat);
-    bulbMat.opacity = 0.8;
-
-    bulbLight.add(moon);
-    bulbLight.position.set(0, 50, -400);
-
-    scene.add(bulbLight);
-    scene.add(hemisphereLight);
-
-    const gui = new GUI();
-    gui.add(bulbLight, 'decay');
-    gui.add(bulbLight, 'distance');
-    gui.add(bulbLight, 'intensity');
   }
 
   public setStars() {
@@ -125,8 +102,7 @@ class Sky implements Module {
     const sphereNodeMat = new MeshStandardNodeMaterial();
     const backgroundNode = vec3(0, 1, 0)
       .sub(positionLocal)
-
-      .mul(0.03)
+      .mul(0.005)
       .clamp(0, 1);
 
     sphereNodeMat.colorNode = color(0, 0, 1).mul(backgroundNode);
