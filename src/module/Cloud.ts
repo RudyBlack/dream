@@ -79,6 +79,7 @@ class Cloud implements Module {
       type === 'right'
         ? vec3(float(instanceIndex), 0, 0)
         : vec3(float(instanceIndex.mul(instanceIndex)).negate(), 5, 0);
+
     const scaleRange = range(2.5, 5);
 
     const smokeColor = mix(
@@ -87,7 +88,7 @@ class Cloud implements Module {
       positionWorld.y.mul(3).clamp(0.5, 1),
     );
 
-    const timer = timerLocal(0.001);
+    const timer = timerLocal(0.05);
 
     const opacityNode = Cloud.makeOpacityNode(map);
     const colorNode = mix(
@@ -95,7 +96,7 @@ class Cloud implements Module {
       smokeColor,
       float(0.5),
     );
-    const positionNode = offsetRange.mul(timer);
+    const positionNode = offsetRange.mul(timer).sin().mul(range(0.08, 0.01));
     const scaleNode = float(scaleRange);
 
     return {
@@ -146,11 +147,7 @@ class Cloud implements Module {
     cloudLeft.scale.set(661, 220, 280);
 
     cloudRight.position.set(269, 410, -1008);
-    // cloudRight.rotation.z = 11.5;
     cloudRight.scale.set(814, 356, 300);
-    DebugController.position(cloudRight);
-    DebugController.scale(cloudRight);
-    // DebugController.position(cloudRight);
   }
 
   private farClouds(params: InitParam) {
