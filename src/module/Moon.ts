@@ -22,7 +22,7 @@ class Moon implements Module {
     moon.scale.setScalar(50);
     scene.add(moon);
 
-    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
+    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 2);
 
     const bulbLight = new THREE.PointLight(0xa2f0ff, 5000, 10000, 1.1);
     bulbLight.add(moon);
