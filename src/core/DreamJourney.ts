@@ -78,7 +78,7 @@ class DreamJourney extends Component<Event> {
     // controls.maxDistance = 1;
     controls.maxPolarAngle = Math.PI;
 
-    scene.add(new THREE.AxesHelper(30));
+    // scene.add(new THREE.AxesHelper(30));
     scene.add(new AmbientLight(0xffffff));
 
     controls.update();

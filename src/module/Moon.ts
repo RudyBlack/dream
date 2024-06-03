@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import GUI from 'lil-gui';
 import { Color, Mesh, MeshStandardMaterial } from 'three';
+import DebugController from '../DebugController.ts';
 
 class Moon implements Module {
   dispose(): void {}
@@ -27,11 +28,6 @@ class Moon implements Module {
     bulbLight.add(moon);
     scene.add(hemisphereLight);
     scene.add(bulbLight);
-
-    const gui = new GUI();
-    gui.add(bulbLight, 'decay');
-    gui.add(bulbLight, 'distance');
-    gui.add(bulbLight, 'intensity');
 
     return Promise.resolve(undefined);
   }

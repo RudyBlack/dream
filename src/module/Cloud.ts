@@ -1,35 +1,25 @@
 import { InitParam, Module } from './type.ts';
 import * as THREE from 'three';
+import { Scene, Texture } from 'three';
 import {
-  cameraPosition,
   color,
-  If,
   instanceIndex,
-  int,
-  max,
+  MeshBasicNodeMaterial,
   MeshStandardNodeMaterial,
-  min,
   mix,
-  modelPosition,
-  modelViewPosition,
-  modelViewProjection,
-  modelWorldMatrix,
   Node,
   positionGeometry,
   positionLocal,
-  positionView,
   positionWorld,
   range,
   ShaderNodeObject,
-  SpriteNodeMaterial,
   texture,
   timerLocal,
   uv,
   vec3,
 } from 'three/examples/jsm/nodes/Nodes';
-import { Scene, Texture, Vector3 } from 'three';
-import GUI from 'lil-gui';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
+import DebugController from '../DebugController.ts';
 
 const SKY_POSITION_Z = -400;
 
@@ -40,26 +30,31 @@ class Cloud implements Module {
     const { canvas, container, camera, renderer, scene, orbitControls } =
       params;
 
-    const map = Cloud.loadTexture();
+    // DebugController.position(cloud4);
+    // DebugController.rotation(cloud4);
+    // DebugController.scale(cloud4);
 
-    const cloud1 = Cloud.makeCloud(map, scene, 'left');
-    const cloud2 = Cloud.makeCloud(map, scene, 'right');
-
-    cloud1.position.set(-250, 100, SKY_POSITION_Z);
-    cloud2.position.set(250, 50, SKY_POSITION_Z);
-
+    this.moonNearClouds(params);
+    // this.farClouds(params);
     return Promise.resolve(undefined);
   }
 
-  private static makeCloud(map: Texture, scene: Scene, type: 'left' | 'right') {
+  private static makeCloud(
+    map: Texture,
+    scene: Scene,
+    type: 'left' | 'right',
+    options: { color?: number } = {},
+  ) {
+    const { color = 0xffffff } = options;
     const { positionNode, scaleNode, colorNode, opacityNode } = Cloud.makeNodes(
       map,
       type,
+      { color },
     );
 
     const smokeNodeMaterial = new MeshStandardNodeMaterial();
     smokeNodeMaterial.colorNode = colorNode;
-
+    smokeNodeMaterial.positionNode = positionLocal.add(positionNode);
     smokeNodeMaterial.opacityNode = opacityNode;
 
     smokeNodeMaterial.depthWrite = false;
@@ -77,7 +72,11 @@ class Cloud implements Module {
     return smokeInstancedSprite;
   }
 
-  private static makeNodes(map: Texture, type: 'left' | 'right') {
+  private static makeNodes(
+    map: Texture,
+    type: 'left' | 'right',
+    options: { color: number },
+  ) {
     const offsetRange =
       type === 'right'
         ? vec3(float(instanceIndex), 0, 0)
@@ -90,11 +89,15 @@ class Cloud implements Module {
       positionWorld.y.mul(3).clamp(0.5, 1),
     );
 
-    const timer = timerLocal(0.003, 0.5);
+    const timer = timerLocal(0.001);
 
     const opacityNode = Cloud.makeOpacityNode(map);
-    const colorNode = mix(color(0x0195f2), smokeColor, float(0.5));
-    const positionNode = offsetRange.mul(0.1).mul(timer);
+    const colorNode = mix(
+      color(options.color ?? 0x015181),
+      smokeColor,
+      float(0.5),
+    );
+    const positionNode = offsetRange.mul(timer);
     const scaleNode = float(scaleRange);
 
     return {
@@ -118,14 +121,56 @@ class Cloud implements Module {
 
     const textureNode = texture(map, uv().mul(rotateRange));
     // const opacityNode = textureNode.a.mul(nodeSum(f).clamp(0, 1));
-    const opacityNode = textureNode.a.mul(1);
+    const opacityNode = textureNode.a.mul(0.9);
     return opacityNode;
   }
 
-  private static loadTexture() {
+  private static loadTexture(path: string) {
     const textureLoader = new THREE.TextureLoader();
-    const map = textureLoader.load('/smoke1.png');
+    const map = textureLoader.load(path);
     return map;
+  }
+
+  private moonNearClouds(params: InitParam) {
+    const { scene } = params;
+    const color = 0xcfcad6;
+    const map3 = Cloud.loadTexture('/clouds/03.png');
+    const map32 = Cloud.loadTexture('/clouds/32.png');
+
+    const cloudLeft = Cloud.makeCloud(map3, scene, 'left', { color });
+    const cloudRight = Cloud.makeCloud(map32, scene, 'right', { color });
+
+    cloudLeft.position.set(-214, 266, -884);
+    cloudLeft.scale.set(661, 220, 280);
+
+    cloudRight.position.set(269, 410, -1008);
+    // cloudRight.rotation.z = 11.5;
+    cloudRight.scale.set(814, 356, 300);
+    DebugController.position(cloudRight);
+    DebugController.scale(cloudRight);
+    // DebugController.position(cloudRight);
+  }
+
+  private farClouds(params: InitParam) {
+    const { scene } = params;
+    const color = 0x3e7297;
+    const map2 = Cloud.loadTexture('/clouds/03.png');
+    const map3 = Cloud.loadTexture('/clouds/02.png');
+
+    const cloud1 = Cloud.makeCloud(map2, scene, 'left', { color });
+    const cloud3 = Cloud.makeCloud(map3, scene, 'right', { color });
+    const cloud4 = Cloud.makeCloud(map2, scene, 'right', { color });
+
+    cloud1.position.set(-463, 67, -947);
+    cloud1.scale.set(403, 220, 280);
+
+    cloud3.position.set(538, 88, -684);
+    cloud3.rotation.z = 5;
+    cloud3.scale.set(125, 174, 300);
+
+    cloud4.position.set(538, 88, -684);
+    cloud4.rotation.z = 5;
+    cloud4.scale.set(125, 174, 300);
   }
 
   dispose(): void {}
