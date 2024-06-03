@@ -26,6 +26,7 @@ import DreamJourney from '../core';
 import StorageInstancedBufferAttribute from 'three/addons/renderers/common/StorageInstancedBufferAttribute.js';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 import GUI from 'lil-gui';
+import DebugController from '../DebugController.ts';
 
 class Sky implements Module {
   private readonly particleCount = 1000;
@@ -54,6 +55,7 @@ class Sky implements Module {
     // scene.add(new THREE.AxesHelper(50));
     this.setStars();
     this.setSceneSphere();
+    this.setGradientBackground(params);
   }
 
   public setStars() {
@@ -102,15 +104,26 @@ class Sky implements Module {
     const sphereNodeMat = new MeshStandardNodeMaterial();
     const backgroundNode = vec3(0, 1, 0)
       .sub(positionLocal)
-      .mul(0.005)
+      .mul(0.002)
       .clamp(0, 1);
 
     sphereNodeMat.colorNode = color(0, 0, 1).mul(backgroundNode);
+
     sphereNodeMat.side = 1;
     const sphere = new Mesh(sphereGeo, sphereNodeMat);
 
     sphere.scale.setScalar(100);
     scene.add(sphere);
+  }
+
+  private setGradientBackground(params: InitParam) {
+    const { scene } = params;
+    const bulbLight = new THREE.DirectionalLight(0xae89cf, 5);
+    bulbLight.position.set(0, 28, -24);
+    scene.add(bulbLight);
+
+    DebugController.position(bulbLight);
+    DebugController.rotation(bulbLight);
   }
 
   /**

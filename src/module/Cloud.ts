@@ -17,7 +17,6 @@ import {
   vec3,
 } from 'three/examples/jsm/nodes/Nodes';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
-import DebugController from '../DebugController.ts';
 
 const CLOUD_COLOR = 0xcfcad6;
 
@@ -178,9 +177,6 @@ class Cloud implements Module {
 
     cloudRight.position.set(1058, 114, -947);
     cloudRight.scale.set(537, 220, 280);
-
-    DebugController.scale(cloudLeft);
-    DebugController.position(cloudLeft);
   }
 
   dispose(): void {}
