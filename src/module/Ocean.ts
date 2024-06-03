@@ -15,6 +15,7 @@ import {
   vec3,
 } from 'three/examples/jsm/nodes/Nodes';
 import { uv } from 'three/examples/jsm/nodes/accessors/UVNode';
+import DebugController from '../DebugController.ts';
 
 class Ocean implements Module {
   private _scene?: Scene;
@@ -25,6 +26,7 @@ class Ocean implements Module {
       params;
 
     this.makeWater();
+    this.makeMoonLightOnWater(params);
   }
 
   dispose(): void {}
@@ -79,6 +81,13 @@ class Ocean implements Module {
       .mul(color(0x355f93));
     water.rotation.x = -Math.PI / 2;
     scene.add(water);
+  }
+
+  private makeMoonLightOnWater(params: InitParam) {
+    const { scene } = params;
+    const bulbLight = new THREE.PointLight(0xe1ffff, 5000, 100);
+    bulbLight.position.set(0, 28, -24);
+    scene.add(bulbLight);
   }
 }
 
