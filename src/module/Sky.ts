@@ -97,6 +97,15 @@ class Sky implements Module {
     });
   }
 
+  public setStars2() {
+    const renderer = this.renderer!;
+    const scene = this.scene!;
+
+    //make plane
+    //texture apply
+    //modify texture by shader
+  }
+
   private setSceneSphere() {
     const scene = this.scene!;
 
@@ -119,7 +128,7 @@ class Sky implements Module {
   private setGradientBackground(params: InitParam) {
     const { scene } = params;
     const bulbLight = new THREE.DirectionalLight(0xae89cf, 5);
-    bulbLight.position.set(0, 28, -24);
+    bulbLight.position.set(0, 122, -24);
     scene.add(bulbLight);
 
     DebugController.position(bulbLight);
