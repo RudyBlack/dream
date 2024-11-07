@@ -17,35 +17,37 @@ import {
   vec3,
 } from 'three/examples/jsm/nodes/Nodes';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
+import { CloudData, CloudObject } from '../@types/object';
 
 const CLOUD_COLOR = 0xcfcad6;
 
 class Cloud implements Module {
   private static instanceCount = 1;
+  private cloudData!: CloudData;
 
-  init(params: InitParam): Promise<void> {
+  private clouds: THREE.InstancedMesh[] = [];
+
+  init(params: InitParam, data: CloudData): Promise<void> {
     const { canvas, container, camera, renderer, scene, orbitControls } =
       params;
 
-    // DebugController.position(cloud4);
-    // DebugController.rotation(cloud4);
-    // DebugController.scale(cloud4);
+    this.cloudData = data;
 
-    this.moonNearClouds(params);
-    this.farClouds(params);
+    this.clouds = data.objects.map((d) => {
+      return this.makeCloud(params, d);
+    });
+
     return Promise.resolve(undefined);
   }
 
   private static makeCloud(
     map: Texture,
     scene: Scene,
-    type: 'left' | 'right',
     options: { color?: number } = {},
   ) {
     const { color = 0xffffff } = options;
     const { positionNode, scaleNode, colorNode, opacityNode } = Cloud.makeNodes(
       map,
-      type,
       { color },
     );
 
@@ -65,19 +67,14 @@ class Cloud implements Module {
     );
 
     smokeInstancedSprite.scale.setScalar(200);
+
     scene.add(smokeInstancedSprite);
+
     return smokeInstancedSprite;
   }
 
-  private static makeNodes(
-    map: Texture,
-    type: 'left' | 'right',
-    options: { color: number },
-  ) {
-    const offsetRange =
-      type === 'right'
-        ? vec3(float(instanceIndex), 0, 0)
-        : vec3(float(instanceIndex.mul(instanceIndex)).negate(), 5, 0);
+  private static makeNodes(map: Texture, options: { color: number }) {
+    const offsetRange = vec3(float(instanceIndex), 0, 0);
 
     const scaleRange = range(2.5, 5);
 
@@ -125,61 +122,51 @@ class Cloud implements Module {
 
   private static loadTexture(path: string) {
     const textureLoader = new THREE.TextureLoader();
-    const map = textureLoader.load(path);
+    const map = textureLoader.load(path, undefined, undefined, (error) => {
+      console.error(`${path}: 구름 불러오는 로직에서 에러`);
+    });
     return map;
   }
 
-  private moonNearClouds(params: InitParam) {
+  private makeCloud(params: InitParam, cloudData: CloudObject) {
     const { scene } = params;
+    const { position, scale, path, uuid, rotation } = cloudData;
 
-    const map3 = Cloud.loadTexture('/clouds/03.png');
-    const map32 = Cloud.loadTexture('/clouds/32.png');
+    const map3 = Cloud.loadTexture(path);
 
-    const cloudLeft = Cloud.makeCloud(map3, scene, 'left', {
-      color: CLOUD_COLOR,
-    });
-    const cloudRight = Cloud.makeCloud(map32, scene, 'right', {
+    const cloudLeft = Cloud.makeCloud(map3, scene, {
       color: CLOUD_COLOR,
     });
 
-    cloudLeft.position.set(-214, 266, -884);
-    cloudLeft.scale.set(661, 220, 280);
+    cloudLeft.position.set(position[0], position[1], position[2]);
+    cloudLeft.scale.set(scale[0], scale[1], scale[2]);
 
-    cloudRight.position.set(269, 410, -1008);
-    cloudRight.scale.set(814, 356, 300);
-  }
+    cloudLeft.uuid = uuid;
 
-  private farClouds(params: InitParam) {
-    const { scene } = params;
-
-    // const map83 = Cloud.loadTexture('/clouds/83.png');
-    const map89 = Cloud.loadTexture('/clouds/89.png');
-    const map99 = Cloud.loadTexture('/clouds/99.png');
-    const map96 = Cloud.loadTexture('/clouds/96.png');
-
-    const cloud1 = Cloud.makeCloud(map89, scene, 'left', {
-      color: CLOUD_COLOR,
-    });
-
-    const cloudLeft = Cloud.makeCloud(map96, scene, 'left', {
-      color: CLOUD_COLOR,
-    });
-
-    const cloudRight = Cloud.makeCloud(map99, scene, 'left', {
-      color: CLOUD_COLOR,
-    });
-
-    cloud1.position.set(-903, 114, -947);
-    cloud1.scale.set(537, 220, 280);
-
-    cloudLeft.position.set(-763, 180, -947);
-    cloudLeft.scale.set(343, 341, 200);
-
-    cloudRight.position.set(1058, 114, -947);
-    cloudRight.scale.set(537, 220, 280);
+    return cloudLeft;
   }
 
   dispose(): void {}
+
+  save(): CloudData {
+    const cloudObjects = this.clouds;
+    const cloudData = cloudObjects.map((obj) => {
+      return {
+        uuid: obj.uuid,
+        position: obj.position.toArray(),
+        rotation: obj.rotation.toArray(),
+        scale: obj.scale.toArray(),
+        path:
+          this.cloudData.objects.find((value) => value.uuid === obj.uuid)
+            ?.path ?? '',
+      };
+    }) as CloudObject[];
+
+    return {
+      type: 'Cloud',
+      objects: cloudData,
+    };
+  }
 }
 
 export default Cloud;

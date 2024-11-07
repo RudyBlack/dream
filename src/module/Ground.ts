@@ -28,6 +28,8 @@ class Ground implements Module {
 
     return Promise.resolve(undefined);
   }
+
+  save(): any {}
 }
 
 export default Ground;

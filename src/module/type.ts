@@ -14,7 +14,9 @@ export interface InitParam {
 }
 
 export interface Module {
-  init(params: InitParam): Promise<void>;
+  init(params: InitParam, data?: unknown): Promise<void>;
+
+  save(): any;
 
   dispose(): void;
 }

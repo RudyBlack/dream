@@ -1,13 +1,26 @@
 import * as THREE from 'three';
 import { InitParam, Module } from './type.ts';
-import { MeshStandardNodeMaterial, parallaxUV, texture } from 'three/examples/jsm/nodes/Nodes';
+import {
+  MeshStandardNodeMaterial,
+  parallaxUV,
+  texture,
+} from 'three/examples/jsm/nodes/Nodes';
 import { uv } from 'three/examples/jsm/nodes/accessors/UVNode';
 
 class IceBox implements Module {
+  save() {
+    // throw new Error('Method not implemented.');
+  }
   async init(params: InitParam): Promise<void> {
     const { scene, renderer, orbitControls } = params;
 
-    const { topTexture, roughnessTexture, normalTexture, displaceTexture, bottomTexture } = await IceBox.loadTextures();
+    const {
+      topTexture,
+      roughnessTexture,
+      normalTexture,
+      displaceTexture,
+      bottomTexture,
+    } = await IceBox.loadTextures();
 
     // const parallaxScale = 0.3;
     const offsetUV = texture(displaceTexture);
@@ -35,23 +48,39 @@ class IceBox implements Module {
   private static async loadTextures() {
     const loader = new THREE.TextureLoader();
 
-    const topTexture = await loader.loadAsync('/ambientcg/Ice002_1K-JPG_Color.jpg');
+    const topTexture = await loader.loadAsync(
+      '/ambientcg/Ice002_1K-JPG_Color.jpg',
+    );
     topTexture.colorSpace = THREE.SRGBColorSpace;
 
-    const roughnessTexture = await loader.loadAsync('/ambientcg/Ice002_1K-JPG_Roughness.jpg');
+    const roughnessTexture = await loader.loadAsync(
+      '/ambientcg/Ice002_1K-JPG_Roughness.jpg',
+    );
     roughnessTexture.colorSpace = THREE.NoColorSpace;
 
-    const normalTexture = await loader.loadAsync('/ambientcg/Ice002_1K-JPG_NormalGL.jpg');
+    const normalTexture = await loader.loadAsync(
+      '/ambientcg/Ice002_1K-JPG_NormalGL.jpg',
+    );
     normalTexture.colorSpace = THREE.NoColorSpace;
 
-    const displaceTexture = await loader.loadAsync('/ambientcg/Ice002_1K-JPG_Displacement.jpg');
+    const displaceTexture = await loader.loadAsync(
+      '/ambientcg/Ice002_1K-JPG_Displacement.jpg',
+    );
     displaceTexture.colorSpace = THREE.NoColorSpace;
 
-    const bottomTexture = await loader.loadAsync('/ambientcg/Ice003_1K-JPG_Color.jpg');
+    const bottomTexture = await loader.loadAsync(
+      '/ambientcg/Ice003_1K-JPG_Color.jpg',
+    );
     bottomTexture.colorSpace = THREE.SRGBColorSpace;
     bottomTexture.wrapS = THREE.RepeatWrapping;
     bottomTexture.wrapT = THREE.RepeatWrapping;
-    return { topTexture, roughnessTexture, normalTexture, displaceTexture, bottomTexture };
+    return {
+      topTexture,
+      roughnessTexture,
+      normalTexture,
+      displaceTexture,
+      bottomTexture,
+    };
   }
 
   dispose(): void {}

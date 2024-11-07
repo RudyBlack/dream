@@ -15,15 +15,15 @@ import {
   vec3,
 } from 'three/examples/jsm/nodes/Nodes';
 import { uv } from 'three/examples/jsm/nodes/accessors/UVNode';
-import DebugController from '../DebugController.ts';
+import { OceanData } from '../@types/object';
 
 class Ocean implements Module {
   private _scene?: Scene;
+  private _oceanData!: OceanData;
 
-  async init(params: InitParam): Promise<void> {
+  async init(params: InitParam, data: OceanData): Promise<void> {
     this._scene = params.scene;
-    const { renderer, camera, scene, canvas, orbitControls, root, container } =
-      params;
+    this._oceanData = data;
 
     this.makeWater();
     this.makeMoonLightOnWater(params);
@@ -80,6 +80,8 @@ class Ocean implements Module {
       .add(reflectance)
       .mul(color(0x355f93));
     water.rotation.x = -Math.PI / 2;
+
+    water.uuid = this._oceanData.uuid;
     scene.add(water);
   }
 
@@ -89,6 +91,8 @@ class Ocean implements Module {
     bulbLight.position.set(0, 28, -24);
     scene.add(bulbLight);
   }
+
+  save(): any {}
 }
 
 export default Ocean;

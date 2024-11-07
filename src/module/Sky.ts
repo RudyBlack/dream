@@ -239,6 +239,8 @@ class Sky implements Module {
   }
 
   dispose(): void {}
+
+  save(): any {}
 }
 
 export default Sky;

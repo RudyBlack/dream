@@ -9,7 +9,8 @@ class AfterImage implements Module {
   dispose(): void {}
 
   init(params: InitParam): Promise<void> {
-    const { renderer, camera, scene, canvas, container, orbitControls, root } = params;
+    const { renderer, camera, scene, canvas, container, orbitControls, root } =
+      params;
 
     const scenePass = pass(scene, camera);
     const scenePassColor = scenePass.getTextureNode();
@@ -25,6 +26,8 @@ class AfterImage implements Module {
 
     return Promise.resolve(undefined);
   }
+
+  save(): any {}
 }
 
 export default AfterImage;

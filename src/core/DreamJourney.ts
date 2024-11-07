@@ -10,6 +10,7 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import Sky from '../module/Sky.ts';
 import Moon from '../module/Moon.ts';
 import EffectProcessing from '../module/EffectProcessing.ts';
+import { loadSceneData, patchSceneData, ResType, saveSceneData } from '../api';
 
 interface Event {
   renderBefore: () => void;
@@ -20,6 +21,12 @@ class DreamJourney extends Component<Event> {
   private readonly _canvas: HTMLCanvasElement;
   private readonly _container: HTMLDivElement;
   private _orbitControls?: OrbitControls;
+
+  private _loadedModules: Module[] = [];
+
+  public get loadedModules() {
+    return this._loadedModules;
+  }
 
   constructor(canvas: HTMLCanvasElement, container: HTMLDivElement) {
     super();
@@ -98,13 +105,13 @@ class DreamJourney extends Component<Event> {
       }
     });
 
-    await this.setModule(
-      new Ocean(),
-      new Sky(),
-      new Cloud(),
-      new Moon(),
-      new EffectProcessing(),
-    );
+    // 예시 사용
+
+    const resData = await loadSceneData(); // 이 부분은 `ResType`의 배열을 반환한다고 가정
+    if (resData) {
+      const loadedModules = await this.loadModules(resData);
+      this._loadedModules = loadedModules;
+    }
 
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
@@ -113,7 +120,7 @@ class DreamJourney extends Component<Event> {
     });
   }
 
-  public async setModule(...modules: Module[]) {
+  public async setModule(data: any, ...modules: Module[]) {
     const canvas = this._canvas!;
     const camera = this._camera!;
     const renderer = this._renderer!;
@@ -121,8 +128,8 @@ class DreamJourney extends Component<Event> {
     const orbitControls = this._orbitControls!;
     const container = this._container!;
 
-    const modulesPromise = modules.map((module) => {
-      return module.init({
+    await modules[0].init(
+      {
         root: this,
         canvas,
         camera,
@@ -130,10 +137,23 @@ class DreamJourney extends Component<Event> {
         scene,
         orbitControls,
         container,
-      });
-    });
+      },
+      data,
+    );
 
-    return Promise.all(modulesPromise);
+    return modules[0];
+  }
+
+  public async save() {
+    const loadedModules = this._loadedModules;
+
+    const saveDataes = loadedModules
+      .map((module) => {
+        return module.save();
+      })
+      .filter((v) => !!v);
+
+    patchSceneData(saveDataes);
   }
 
   private loadHDR() {
@@ -157,6 +177,28 @@ class DreamJourney extends Component<Event> {
     renderer.render(scene, camera);
     orbitControls?.update();
   }
+
+  private loadModules = async (resData: ResType) => {
+    const loadedMoules = [];
+    for (const item of resData) {
+      try {
+        // 동적 import를 사용하여 모듈 가져오기
+        const modulePath = `../module/${item.type}`; // 경로는 모듈 구조에 따라 조정 필요
+        const ModuleClass = (await import(modulePath)).default;
+
+        if (ModuleClass) {
+          const module = await this.setModule(item, new ModuleClass());
+          loadedMoules.push(module);
+        } else {
+          console.warn(`Module for type ${item.type} not found.`);
+        }
+      } catch (error) {
+        console.error(`Failed to load module for type ${item.type}:`, error);
+      }
+    }
+
+    return loadedMoules;
+  };
 }
 
 export default DreamJourney;

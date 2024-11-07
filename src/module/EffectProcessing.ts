@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { InitParam, Module } from './type.ts';
 import { pass } from 'three/examples/jsm/nodes/display/PassNode';
-import { uniform } from 'three/examples/jsm/nodes/Nodes';
+import { threshold, uniform } from 'three/examples/jsm/nodes/Nodes';
 import PostProcessing from 'three/examples/jsm/renderers/common/PostProcessing';
 
 class EffectProcessing implements Module {
@@ -33,6 +33,8 @@ class EffectProcessing implements Module {
 
     return Promise.resolve(undefined);
   }
+
+  save(): any {}
 }
 
 export default EffectProcessing;
