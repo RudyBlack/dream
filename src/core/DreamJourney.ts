@@ -4,13 +4,8 @@ import { AmbientLight, Color } from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Component from '@egjs/component';
-import Cloud from '../module/Cloud.ts';
-import Ocean from '../module/Ocean.ts';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
-import Sky from '../module/Sky.ts';
-import Moon from '../module/Moon.ts';
-import EffectProcessing from '../module/EffectProcessing.ts';
-import { loadSceneData, patchSceneData, ResType, saveSceneData } from '../api';
+import { loadSceneData, patchSceneData, ResType } from '../api';
 
 interface Event {
   renderBefore: () => void;
@@ -50,6 +45,10 @@ class DreamJourney extends Component<Event> {
 
   get camera() {
     return this._camera!;
+  }
+
+  get orbitControls() {
+    return this._orbitControls!;
   }
 
   public async init() {

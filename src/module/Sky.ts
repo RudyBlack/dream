@@ -25,8 +25,6 @@ import DreamJourney from '../core';
 // @ts-ignore
 import StorageInstancedBufferAttribute from 'three/addons/renderers/common/StorageInstancedBufferAttribute.js';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
-import GUI from 'lil-gui';
-import DebugController from '../DebugController.ts';
 
 class Sky implements Module {
   private readonly particleCount = 1000;
@@ -130,9 +128,6 @@ class Sky implements Module {
     const bulbLight = new THREE.DirectionalLight(0xae89cf, 5);
     bulbLight.position.set(0, 122, -24);
     scene.add(bulbLight);
-
-    DebugController.position(bulbLight);
-    DebugController.rotation(bulbLight);
   }
 
   /**

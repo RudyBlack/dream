@@ -142,6 +142,7 @@ class Cloud implements Module {
     cloudLeft.scale.set(scale[0], scale[1], scale[2]);
 
     cloudLeft.uuid = uuid;
+    cloudLeft.name = 'Cloud';
 
     return cloudLeft;
   }

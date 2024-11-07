@@ -1,9 +1,7 @@
 import { InitParam, Module } from './type.ts';
 import * as THREE from 'three';
+import { Mesh, MeshStandardMaterial } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import GUI from 'lil-gui';
-import { Color, Mesh, MeshStandardMaterial } from 'three';
-import DebugController from '../DebugController.ts';
 import { MoonData } from '../@types/object';
 
 class Moon implements Module {
