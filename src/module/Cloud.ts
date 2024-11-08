@@ -17,25 +17,27 @@ import {
   vec3,
 } from 'three/examples/jsm/nodes/Nodes';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
-import { CloudData, CloudObject } from '../@types/object';
+import { ObjectData, ResObjectData } from '../@types/object';
 
 const CLOUD_COLOR = 0xcfcad6;
 
 class Cloud implements Module {
   private static instanceCount = 1;
-  private cloudData!: CloudData;
+  private cloudData!: ResObjectData;
 
   private clouds: THREE.InstancedMesh[] = [];
 
-  init(params: InitParam, data: CloudData): Promise<void> {
+  init(params: InitParam, data: ResObjectData): Promise<void> {
     const { canvas, container, camera, renderer, scene, orbitControls } =
       params;
 
     this.cloudData = data;
 
-    this.clouds = data.objects.map((d) => {
-      return this.makeCloud(params, d);
-    });
+    for (const itemKey in data) {
+      const target = data[itemKey];
+
+      this.clouds.push(this.makeCloud(params, itemKey, target));
+    }
 
     return Promise.resolve(undefined);
   }
@@ -128,11 +130,11 @@ class Cloud implements Module {
     return map;
   }
 
-  private makeCloud(params: InitParam, cloudData: CloudObject) {
+  private makeCloud(params: InitParam, uuid: string, cloudData: ObjectData) {
     const { scene } = params;
-    const { position, scale, path, uuid, rotation } = cloudData;
+    const { position, scale, path } = cloudData;
 
-    const map3 = Cloud.loadTexture(path);
+    const map3 = Cloud.loadTexture(path ?? '');
 
     const cloudLeft = Cloud.makeCloud(map3, scene, {
       color: CLOUD_COLOR,
@@ -149,24 +151,19 @@ class Cloud implements Module {
 
   dispose(): void {}
 
-  save(): CloudData {
+  save() {
     const cloudObjects = this.clouds;
-    const cloudData = cloudObjects.map((obj) => {
-      return {
-        uuid: obj.uuid,
+    const rtnObject = {} as Record<string, Partial<ObjectData>>;
+
+    cloudObjects.forEach((obj) => {
+      rtnObject[obj.uuid] = {
         position: obj.position.toArray(),
         rotation: obj.rotation.toArray(),
         scale: obj.scale.toArray(),
-        path:
-          this.cloudData.objects.find((value) => value.uuid === obj.uuid)
-            ?.path ?? '',
       };
-    }) as CloudObject[];
+    });
 
-    return {
-      type: 'Cloud',
-      objects: cloudData,
-    };
+    return rtnObject;
   }
 }
 

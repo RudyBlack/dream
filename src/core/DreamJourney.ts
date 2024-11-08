@@ -5,7 +5,8 @@ import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.j
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Component from '@egjs/component';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
-import { loadSceneData, patchSceneData, ResType } from '../api';
+import { loadModulesData, loadSceneData, patchSceneData } from '../api';
+import { ObjectData, ResObjectData } from '../@types/object';
 
 interface Event {
   renderBefore: () => void;
@@ -106,9 +107,12 @@ class DreamJourney extends Component<Event> {
 
     // 예시 사용
 
-    const resData = await loadSceneData(); // 이 부분은 `ResType`의 배열을 반환한다고 가정
-    if (resData) {
-      const loadedModules = await this.loadModules(resData);
+    const resModuleData = await loadModulesData();
+    const resData = await loadSceneData();
+
+    if (resData && resModuleData) {
+      console.log(resModuleData, resData);
+      const loadedModules = await this.loadModules(resModuleData, resData);
       this._loadedModules = loadedModules;
     }
 
@@ -119,7 +123,7 @@ class DreamJourney extends Component<Event> {
     });
   }
 
-  public async setModule(data: any, ...modules: Module[]) {
+  public async setModule(data: ResObjectData, ...modules: Module[]) {
     const canvas = this._canvas!;
     const camera = this._camera!;
     const renderer = this._renderer!;
@@ -146,13 +150,13 @@ class DreamJourney extends Component<Event> {
   public async save() {
     const loadedModules = this._loadedModules;
 
-    const saveDataes = loadedModules
-      .map((module) => {
-        return module.save();
-      })
-      .filter((v) => !!v);
+    const saveData = loadedModules.reduce((acc, module) => {
+      const saveData = module.save();
 
-    patchSceneData(saveDataes);
+      return { ...acc, ...saveData };
+    }, {});
+
+    patchSceneData(saveData);
   }
 
   private loadHDR() {
@@ -177,22 +181,37 @@ class DreamJourney extends Component<Event> {
     orbitControls?.update();
   }
 
-  private loadModules = async (resData: ResType) => {
+  private loadModules = async (resData: string[], data: ResObjectData) => {
     const loadedMoules = [];
+    const moduleData = {} as Record<string, Record<string, ObjectData>>;
+
+    for (const itemKey in data) {
+      const target = data[itemKey];
+
+      if (!moduleData[target.type]) {
+        moduleData[target.type] = {};
+      }
+
+      moduleData[target.type][itemKey] = target;
+    }
+
     for (const item of resData) {
       try {
         // 동적 import를 사용하여 모듈 가져오기
-        const modulePath = `../module/${item.type}`; // 경로는 모듈 구조에 따라 조정 필요
+        const modulePath = `../module/${item}`; // 경로는 모듈 구조에 따라 조정 필요
         const ModuleClass = (await import(modulePath)).default;
 
         if (ModuleClass) {
-          const module = await this.setModule(item, new ModuleClass());
+          const module = await this.setModule(
+            moduleData[item],
+            new ModuleClass(),
+          );
           loadedMoules.push(module);
         } else {
-          console.warn(`Module for type ${item.type} not found.`);
+          console.warn(`Module for type ${item} not found.`);
         }
       } catch (error) {
-        console.error(`Failed to load module for type ${item.type}:`, error);
+        console.error(`Failed to load module for type ${item}:`, error);
       }
     }
 

@@ -1,29 +1,13 @@
-export interface OceanData {
-  type: 'Ocean';
-  uuid: string;
+export interface ResObjectData {
+  [uuid: string]: ObjectData;
 }
 
-export interface Sky {
-  type: 'Star';
-}
-
-export interface MoonData {
-  type: 'Moon';
+export interface ObjectData {
   uuid: string;
+  type: string;
   position: number[];
+  path?: string;
+  scale: number[];
+  rotation: (string | number | undefined)[];
   opacity: number;
-  scale: number[];
-}
-
-export interface CloudData {
-  type: 'Cloud';
-  objects: CloudObject[];
-}
-
-export interface CloudObject {
-  uuid: string;
-  position: number[];
-  path: string;
-  scale: number[];
-  rotation: number[];
 }

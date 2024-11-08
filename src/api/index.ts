@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ResObjectData } from '../@types/object';
 
 const API_ENDPOINT = `http://localhost:3001`;
 
@@ -22,13 +23,7 @@ export async function saveSceneData(data: any) {
   }
 }
 
-export type ResType = Root2[];
-
-export interface Root2 {
-  type: string;
-}
-
-export async function loadSceneData(): Promise<ResType | undefined> {
+export async function loadSceneData(): Promise<ResObjectData | undefined> {
   try {
     const response = await fetch(`${API_ENDPOINT}/load-scene`);
     if (response.ok) {
@@ -75,6 +70,19 @@ export async function patchSceneData(partialData: any) {
       console.log('장면 데이터가 성공적으로 부분 업데이트되었습니다.');
     } else {
       console.error('장면 데이터 부분 업데이트 실패:', response.statusText);
+    }
+  } catch (error) {
+    console.error('에러 발생:', error);
+  }
+}
+
+export async function loadModulesData(): Promise<string[] | undefined> {
+  try {
+    const response = await fetch(`${API_ENDPOINT}/load-package`);
+    if (response.ok) {
+      return await response.json();
+    } else {
+      console.error('장면 데이터 불러오기 실패:', response.statusText);
     }
   } catch (error) {
     console.error('에러 발생:', error);
