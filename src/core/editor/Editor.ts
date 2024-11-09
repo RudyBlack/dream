@@ -30,8 +30,14 @@ class Editor {
     ));
     scene.add(transformControls);
 
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        transformControls.detach();
+      }
+    });
     // 마우스 클릭 이벤트 추가
-    window.addEventListener('click', (event) => {
+    window.addEventListener('pointerdown', (event) => {
+      if (transformControls.object) return;
       // 마우스 좌표를 -1에서 1 사이 값으로 변환
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
