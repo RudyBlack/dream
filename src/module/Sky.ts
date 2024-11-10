@@ -50,10 +50,8 @@ class Sky implements Module {
     this.camera = camera;
     this.canvas = canvas;
 
-    // scene.add(new THREE.AxesHelper(50));
     this.setStars();
     this.setSceneSphere();
-    this.setGradientBackground(params);
   }
 
   public setStars() {
@@ -121,13 +119,6 @@ class Sky implements Module {
 
     sphere.scale.setScalar(100);
     scene.add(sphere);
-  }
-
-  private setGradientBackground(params: InitParam) {
-    const { scene } = params;
-    const bulbLight = new THREE.DirectionalLight(0xae89cf, 5);
-    bulbLight.position.set(0, 122, -24);
-    scene.add(bulbLight);
   }
 
   /**

@@ -10,7 +10,7 @@ await dreamJourney.init();
 const { renderer, camera, scene, orbitControls } = dreamJourney;
 const editor = new Editor({ scene, renderer, camera, orbitControls });
 
-editor.setTargetName = 'Cloud';
+editor.transformEdit.setTargetName = 'Cloud';
 editor.setTransformMode('rotate');
 // 키보드 이벤트 리스너 추가
 window.addEventListener('keydown', (event) => {
@@ -31,6 +31,7 @@ window.addEventListener('keydown', (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key === 's') {
     event.preventDefault(); // 브라우저의 기본 저장 동작 방지
     dreamJourney.save();
+    editor.save();
     // 필요한 로직 추가
   }
 });

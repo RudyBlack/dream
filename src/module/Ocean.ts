@@ -23,7 +23,6 @@ class Ocean implements Module {
     this._scene = params.scene;
 
     this.makeWater();
-    this.makeMoonLightOnWater(params);
   }
 
   dispose(): void {}
@@ -79,13 +78,6 @@ class Ocean implements Module {
     water.rotation.x = -Math.PI / 2;
 
     scene.add(water);
-  }
-
-  private makeMoonLightOnWater(params: InitParam) {
-    const { scene } = params;
-    const bulbLight = new THREE.PointLight(0xe1ffff, 5000, 100);
-    bulbLight.position.set(0, 28, -24);
-    scene.add(bulbLight);
   }
 
   save(): any {}

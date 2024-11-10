@@ -10,6 +10,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.1.1",
+    "@tweakpane/core": "^2.0.5",
     "@types/three": "^0.164.0",
     "eslint": "^9.1.1",
     "eslint-config-prettier": "^9.1.0",
@@ -21,6 +22,7 @@
   },
   "dependencies": {
     "@egjs/component": "^3.0.5",
-    "three": "^0.164.1"
+    "three": "^0.164.1",
+    "tweakpane": "^4.0.5"
   }
 }

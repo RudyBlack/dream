@@ -33,12 +33,11 @@ class Moon implements Module {
       this.moon = moon;
       scene.add(moon);
 
-      const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 2);
-
-      const bulbLight = new THREE.PointLight(0xa2f0ff, 5000, 10000, 1.1);
-      bulbLight.add(moon);
-      scene.add(hemisphereLight);
-      scene.add(bulbLight);
+      // const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 2);
+      // const bulbLight = new THREE.PointLight(0xa2f0ff, 5000, 10000, 1.1);
+      //
+      // scene.add(hemisphereLight);
+      // scene.add(bulbLight);
     }
 
     return Promise.resolve(undefined);

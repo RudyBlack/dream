@@ -5,8 +5,14 @@ import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.j
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Component from '@egjs/component';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
-import { loadModulesData, loadSceneData, patchSceneData } from '../api';
+import {
+  loadLightData,
+  loadModulesData,
+  loadSceneData,
+  patchSceneData,
+} from '../api';
 import { ObjectData, ResObjectData } from '../@types/object';
+import LightLoader from './LightLoader.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -64,14 +70,31 @@ class DreamJourney extends Component<Event> {
       1,
       5000,
     );
-    this._orbitControls = new OrbitControls(this._camera, this._canvas);
-
+    const orbitControls = (this._orbitControls = new OrbitControls(
+      this._camera,
+      this._canvas,
+    ));
     const scene = this.scene;
-
     const renderer = this._renderer;
     const camera = this._camera;
     const controls = this._orbitControls;
     const canvas = this._canvas;
+
+    const lightLoader = new LightLoader({
+      root: this,
+      canvas,
+      camera,
+      renderer,
+      scene,
+      orbitControls,
+      container: this._container,
+    });
+
+    const lightData = await loadLightData();
+
+    if (lightData) {
+      lightLoader.loadLight(lightData);
+    }
 
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -80,13 +103,10 @@ class DreamJourney extends Component<Event> {
     const cameraY = 3;
 
     camera.position.set(0, cameraY, 0);
-
     controls.target.set(0, cameraY, -0.01);
-    // controls.minDistance = 1;
-    // controls.maxDistance = 1;
+
     controls.maxPolarAngle = Math.PI;
 
-    // scene.add(new THREE.AxesHelper(30));
     scene.add(new AmbientLight(0xffffff));
 
     controls.update();
@@ -105,13 +125,10 @@ class DreamJourney extends Component<Event> {
       }
     });
 
-    // 예시 사용
-
     const resModuleData = await loadModulesData();
     const resData = await loadSceneData();
 
     if (resData && resModuleData) {
-      console.log(resModuleData, resData);
       const loadedModules = await this.loadModules(resModuleData, resData);
       this._loadedModules = loadedModules;
     }
