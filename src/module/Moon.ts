@@ -30,6 +30,7 @@ class Moon implements Module {
 
       moon.scale.set(scale[0], scale[1], scale[2]);
       moon.uuid = uuid;
+      moon.name = 'MOON';
       this.moon = moon;
       scene.add(moon);
 

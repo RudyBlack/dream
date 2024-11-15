@@ -122,3 +122,32 @@ export async function loadModulesData(): Promise<string[] | undefined> {
     console.error('에러 발생:', error);
   }
 }
+
+export async function deleteObject(deleteTarget: string) {
+  try {
+    const response = await fetch(`${API_ENDPOINT}/scene/${deleteTarget}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      console.log('삭제 성공');
+    } else {
+      console.error('삭제 실패:', response.statusText);
+    }
+  } catch (error) {
+    console.error('에러 발생:', error);
+  }
+}
+
+export async function postObjectOpacity(uuid: string, blob: Blob) {
+  return fetch(`${API_ENDPOINT}/object-opacity/${uuid}`, {
+    method: 'POST',
+    body: blob,
+  });
+}
+
+export async function getObjectOpacity(uuid: string) {
+  return fetch(`${API_ENDPOINT}/object-opacity/${uuid}`, {
+    method: 'GET',
+  });
+}

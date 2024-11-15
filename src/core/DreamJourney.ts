@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Component from '@egjs/component';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import {
+  getObjectOpacity,
   loadLightData,
   loadModulesData,
   loadSceneData,
@@ -13,6 +14,8 @@ import {
 } from '../api';
 import { ObjectData, ResObjectData } from '../@types/object';
 import LightLoader from './LightLoader.ts';
+import pako from 'pako';
+import Cloud from '../module/Cloud.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -28,6 +31,10 @@ class DreamJourney extends Component<Event> {
 
   public get loadedModules() {
     return this._loadedModules;
+  }
+
+  public get canvas() {
+    return this._canvas;
   }
 
   constructor(canvas: HTMLCanvasElement, container: HTMLDivElement) {
@@ -64,8 +71,9 @@ class DreamJourney extends Component<Event> {
       antialias: false,
     });
     this._scene = new THREE.Scene();
+
     this._camera = new THREE.PerspectiveCamera(
-      60,
+      50,
       this._canvas.clientWidth / this._canvas.clientHeight,
       1,
       5000,
@@ -138,6 +146,30 @@ class DreamJourney extends Component<Event> {
       this.render();
       this.trigger('renderAfter');
     });
+
+    const cloudModule = this.loadedModules.find(
+      (m) => m.constructor.name === 'Cloud',
+    ) as Cloud;
+
+    if (cloudModule) {
+      cloudModule.clouds.forEach((c) => {
+        getObjectOpacity(c.uuid).then((res) => {
+          const resData = res.body;
+
+          if (resData) {
+            const a = resData.getReader();
+            a.read().then((r) => {
+              if (r.value) {
+                cloudModule.replaceDataTexture(
+                  c.uuid,
+                  pako.ungzip(r.value, { raw: false }),
+                );
+              }
+            });
+          }
+        });
+      });
+    }
   }
 
   public async setModule(data: ResObjectData, ...modules: Module[]) {
@@ -216,7 +248,9 @@ class DreamJourney extends Component<Event> {
       try {
         // 동적 import를 사용하여 모듈 가져오기
         const modulePath = `../module/${item}`; // 경로는 모듈 구조에 따라 조정 필요
-        const ModuleClass = (await import(modulePath)).default;
+
+        const ModuleClass = (await import(/* @vite-ignore */ modulePath))
+          .default;
 
         if (ModuleClass) {
           const module = await this.setModule(

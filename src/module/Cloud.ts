@@ -1,16 +1,15 @@
+import pako from 'pako';
 import { InitParam, Module } from './type.ts';
 import * as THREE from 'three';
-import { Scene, Texture } from 'three';
+import { DataTexture, Texture } from 'three';
 import {
   color,
   instanceIndex,
   MeshStandardNodeMaterial,
   mix,
-  Node,
   positionLocal,
   positionWorld,
   range,
-  ShaderNodeObject,
   texture,
   timerLocal,
   uv,
@@ -18,14 +17,24 @@ import {
 } from 'three/examples/jsm/nodes/Nodes';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 import { ObjectData, ResObjectData } from '../@types/object';
+import { postObjectOpacity } from '../api';
 
 const CLOUD_COLOR = 0xcfcad6;
 
 class Cloud implements Module {
   private static instanceCount = 1;
   private cloudData!: ResObjectData;
+  private _opacityData?: Record<string, Uint8Array>;
 
-  private clouds: THREE.InstancedMesh[] = [];
+  private _clouds: THREE.InstancedMesh[] = [];
+
+  public get clouds() {
+    return this._clouds;
+  }
+
+  public set opacityData(value: Record<string, Uint8Array>) {
+    this._opacityData = value;
+  }
 
   init(params: InitParam, data: ResObjectData): Promise<void> {
     const { canvas, container, camera, renderer, scene, orbitControls } =
@@ -36,22 +45,159 @@ class Cloud implements Module {
     for (const itemKey in data) {
       const target = data[itemKey];
 
-      this.clouds.push(this.makeCloud(params, itemKey, target));
+      this.makeCloud(params, itemKey, target).then((cloud) => {
+        if (cloud) {
+          this._clouds.push(cloud);
+        }
+      });
     }
 
     return Promise.resolve(undefined);
   }
 
-  private static makeCloud(
-    map: Texture,
-    scene: Scene,
-    options: { color?: number } = {},
+  public dispose(): void {}
+
+  public save() {
+    const cloudObjects = this._clouds;
+    const rtnObject = {} as Record<string, Partial<ObjectData>>;
+
+    cloudObjects.forEach((obj) => {
+      rtnObject[obj.uuid] = {
+        position: obj.position.toArray(),
+        rotation: obj.rotation.toArray(),
+        scale: obj.scale.toArray(),
+      };
+    });
+
+    return rtnObject;
+  }
+
+  public replaceDataTexture(uuid: string, replaceData: Uint8Array) {
+    const target = this._clouds.find((item) => item.uuid === uuid);
+
+    if (!target) return;
+
+    const maskTexture = target.userData.maskTexture as DataTexture;
+    const data = maskTexture.image.data;
+
+    replaceData.forEach((value, i) => {
+      data[i] = value;
+    });
+
+    maskTexture.needsUpdate = true;
+  }
+
+  public updateDataTexture(
+    uuid: string,
+    uv: { x: number; y: number },
+    radius = 100,
+    intensity = 0.5,
   ) {
-    const { color = 0xffffff } = options;
-    const { positionNode, scaleNode, colorNode, opacityNode } = Cloud.makeNodes(
-      map,
-      { color },
+    const target = this._clouds.find((item) => item.uuid === uuid);
+
+    if (!target) return;
+
+    const maskTexture = target.userData.maskTexture as DataTexture;
+    const data = maskTexture.image.data;
+    const textureWidth = maskTexture.image.width;
+    const textureHeight = maskTexture.image.height;
+
+    // UV 좌표를 픽셀 좌표로 변환
+    const x = Math.floor(uv.x * textureWidth);
+    const y = Math.floor(uv.y * textureHeight); // Y축 방향 변환
+
+    // 브러시 크기 설정
+    const brushRadius = radius; // 픽셀 단위
+
+    const updatedData = {} as Record<number, number>;
+    // 원형 브러시를 사용하여 주변 픽셀의 알파 값을 0으로 설정
+    for (let i = -brushRadius; i <= brushRadius; i++) {
+      for (let j = -brushRadius; j <= brushRadius; j++) {
+        const dx = x + i;
+        const dy = y + j;
+
+        // 텍스처 범위를 벗어나면 무시
+        if (dx < 0 || dx >= textureWidth || dy < 0 || dy >= textureHeight)
+          continue;
+
+        // 원형 브러시 영역 계산
+        if (i * i + j * j > brushRadius * brushRadius) continue;
+
+        const factor = (brushRadius - Math.sqrt(i * i + j * j)) / brushRadius;
+
+        // 픽셀 인덱스 계산
+        const index = dy * textureWidth + dx;
+
+        const opacityData = Math.max(
+          0,
+          Math.floor(Math.min(data[index], 255 - factor * 255 - intensity)),
+        );
+        data[index] = opacityData;
+
+        updatedData[index] = opacityData;
+      }
+    }
+
+    // 마스크 텍스처 업데이트
+    maskTexture.needsUpdate = true;
+
+    return maskTexture;
+  }
+
+  private makeDataTexture(width: number, height: number) {
+    const maskWidth = width;
+    const maskHeight = height;
+
+    // RGBA 데이터를 저장할 배열 생성
+    const size = maskWidth * maskHeight;
+    const data = new Uint8Array(size);
+
+    // 초기화 (모든 픽셀의 알파 값을 255로 설정)
+    for (let i = 0; i < size; i++) {
+      data[i] = 255; // A
+    }
+
+    // DataTexture 생성
+    const maskTexture = new THREE.DataTexture(
+      data,
+      maskWidth,
+      maskHeight,
+      THREE.RedFormat, // 또는 THREE.RedFormat
     );
+    maskTexture.needsUpdate = true;
+
+    return maskTexture;
+  }
+
+  private async loadTexture(path: string) {
+    try {
+      const textureLoader = new THREE.TextureLoader();
+      const map = await textureLoader.loadAsync(path);
+
+      return map;
+    } catch (e) {
+      console.error(`${path}: 구름 불러오는 로직에서 에러`);
+    }
+  }
+
+  private async makeCloud(
+    params: InitParam,
+    uuid: string,
+    cloudData: ObjectData,
+  ) {
+    const { scene } = params;
+    const { position, scale, path } = cloudData;
+
+    const map3 = await this.loadTexture(path ?? '');
+    if (!map3) return;
+
+    const maskTexture = this.makeDataTexture(
+      map3.image.width,
+      map3.image.height,
+    );
+
+    const { positionNode, colorNode, opacityNode, dataTextureNode } =
+      this.makeNodes(map3, maskTexture, { color: '#E1FFFC' });
 
     const smokeNodeMaterial = new MeshStandardNodeMaterial();
     smokeNodeMaterial.colorNode = colorNode;
@@ -72,10 +218,24 @@ class Cloud implements Module {
 
     scene.add(smokeInstancedSprite);
 
-    return smokeInstancedSprite;
+    const cloud = smokeInstancedSprite;
+
+    cloud.userData.maskTexture = maskTexture;
+
+    cloud.position.set(position[0], position[1], position[2]);
+    cloud.scale.set(scale[0], scale[1], scale[2]);
+
+    cloud.uuid = uuid;
+    cloud.name = 'Cloud';
+
+    return cloud;
   }
 
-  private static makeNodes(map: Texture, options: { color: number }) {
+  private makeNodes(
+    map: Texture,
+    dataTexture: THREE.DataTexture,
+    options: { color: number | string },
+  ) {
     const offsetRange = vec3(float(instanceIndex), 0, 0);
 
     const scaleRange = range(2.5, 5);
@@ -88,7 +248,11 @@ class Cloud implements Module {
 
     const timer = timerLocal(0.05);
 
-    const opacityNode = Cloud.makeOpacityNode(map);
+    const textureNode = texture(map, uv());
+    const dataTextureNode = texture(dataTexture, uv());
+
+    const opacityNode = textureNode.a.mul(dataTextureNode.r);
+
     const colorNode = mix(
       color(options.color ?? 0x015181),
       smokeColor,
@@ -102,68 +266,8 @@ class Cloud implements Module {
       colorNode,
       scaleNode,
       opacityNode,
+      dataTextureNode,
     };
-  }
-
-  private static makeOpacityNode(map: Texture) {
-    function nodeSum(node: ShaderNodeObject<Node>) {
-      return node.x
-        .mul(0.2)
-        .add(node.y.abs().mul(0.01))
-        .add(node.z.abs().mul(0.01));
-    }
-
-    const rotateRange = range(1, 1.2);
-    const f = positionWorld.add(instanceIndex.mul(100)).mul(0.05);
-
-    const textureNode = texture(map, uv().mul(rotateRange));
-    // const opacityNode = textureNode.a.mul(nodeSum(f).clamp(0, 1));
-    const opacityNode = textureNode.a.mul(0.9);
-    return opacityNode;
-  }
-
-  private static loadTexture(path: string) {
-    const textureLoader = new THREE.TextureLoader();
-    const map = textureLoader.load(path, undefined, undefined, (error) => {
-      console.error(`${path}: 구름 불러오는 로직에서 에러`);
-    });
-    return map;
-  }
-
-  private makeCloud(params: InitParam, uuid: string, cloudData: ObjectData) {
-    const { scene } = params;
-    const { position, scale, path } = cloudData;
-
-    const map3 = Cloud.loadTexture(path ?? '');
-
-    const cloudLeft = Cloud.makeCloud(map3, scene, {
-      color: CLOUD_COLOR,
-    });
-
-    cloudLeft.position.set(position[0], position[1], position[2]);
-    cloudLeft.scale.set(scale[0], scale[1], scale[2]);
-
-    cloudLeft.uuid = uuid;
-    cloudLeft.name = 'Cloud';
-
-    return cloudLeft;
-  }
-
-  dispose(): void {}
-
-  save() {
-    const cloudObjects = this.clouds;
-    const rtnObject = {} as Record<string, Partial<ObjectData>>;
-
-    cloudObjects.forEach((obj) => {
-      rtnObject[obj.uuid] = {
-        position: obj.position.toArray(),
-        rotation: obj.rotation.toArray(),
-        scale: obj.scale.toArray(),
-      };
-    });
-
-    return rtnObject;
   }
 }
 

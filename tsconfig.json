@@ -20,7 +20,8 @@
     "noFallthroughCasesInSwitch": true,
 
 //    "experimentalDecorators": true
-    "types": ["three/examples/jsm/nodes/Nodes"]
+    "types": ["three/examples/jsm/nodes/Nodes"],
+    "allowSyntheticDefaultImports": true
   },
 
   "include": ["src"]

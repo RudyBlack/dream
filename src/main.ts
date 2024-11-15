@@ -8,30 +8,52 @@ const dreamJourney = new DreamJourney(canvas, container);
 await dreamJourney.init();
 
 const { renderer, camera, scene, orbitControls } = dreamJourney;
-const editor = new Editor({ scene, renderer, camera, orbitControls });
+const editor = new Editor(dreamJourney, {
+  scene,
+  renderer,
+  camera,
+  orbitControls,
+  canvas,
+});
 
-editor.transformEdit.setTargetName = 'Cloud';
+editor.transformEdit.targetName = 'Cloud';
 editor.setTransformMode('rotate');
 // 키보드 이벤트 리스너 추가
 window.addEventListener('keydown', (event) => {
-  // 단일 키 인식 ('r', 's', 't')
+  if (event.key === 'Backspace') {
+    editor.deleteObject();
+  }
+
+  if (event.key === 'Escape') {
+    editor.transformEdit.detach();
+    editor.opacityEdit.flag = false;
+  }
+
   if (event.key === 'r') {
     editor.setTransformMode('rotate');
   } else if (event.key === 's') {
-    console.log('S key pressed');
-    // 필요한 로직 추가
     editor.setTransformMode('scale');
   } else if (event.key === 't') {
-    console.log('T key pressed');
-    // 필요한 로직 추가
     editor.setTransformMode('translate');
   }
+  if (event.key === 'o') {
+    editor.opacityEdit.flag = true;
+    // editor.opacityEdit.startAdjustFromMouse();
+  }
 
-  // Command+S (macOS) 또는 Ctrl+S (Windows)
   if ((event.metaKey || event.ctrlKey) && event.key === 's') {
     event.preventDefault(); // 브라우저의 기본 저장 동작 방지
     dreamJourney.save();
     editor.save();
-    // 필요한 로직 추가
+  }
+
+  if ((event.metaKey || event.ctrlKey) && event.key === 'l') {
+    event.preventDefault(); // 브라우저의 기본 저장 동작 방지
+    editor.lockObject();
+  }
+
+  if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+    event.preventDefault(); // 브라우저의 기본 저장 동작 방지
+    editor.unlockAllObject();
   }
 });
