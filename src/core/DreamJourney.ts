@@ -16,6 +16,10 @@ import { ObjectData, ResObjectData } from '../@types/object';
 import LightLoader from './LightLoader.ts';
 import pako from 'pako';
 import Cloud from '../module/Cloud.ts';
+import Moon from '../module/Moon.ts';
+import Sky from '../module/Sky.ts';
+import Ocean from '../module/Ocean.ts';
+import Galaxy from '../module/Galaxy.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -137,8 +141,33 @@ class DreamJourney extends Component<Event> {
     const resData = await loadSceneData();
 
     if (resData && resModuleData) {
-      const loadedModules = await this.loadModules(resModuleData, resData);
-      this._loadedModules = loadedModules;
+      const loadedMoules = [];
+      const moduleData = {} as Record<string, Record<string, ObjectData>>;
+
+      for (const itemKey in resData) {
+        const target = resData[itemKey];
+
+        if (!moduleData[target.type]) {
+          moduleData[target.type] = {};
+        }
+
+        moduleData[target.type][itemKey] = target;
+      }
+
+      loadedMoules.push(await this.setModule(moduleData['Cloud'], new Cloud()));
+
+      loadedMoules.push(await this.setModule(moduleData['Moon'], new Moon()));
+
+      loadedMoules.push(await this.setModule(moduleData['Sky'], new Sky()));
+
+      loadedMoules.push(await this.setModule(moduleData['Ocean'], new Ocean()));
+
+      loadedMoules.push(
+        await this.setModule(moduleData['Galaxy'], new Galaxy()),
+      );
+
+      // const loadedModules = await this.loadModules(resModuleData, resData);
+      this._loadedModules = loadedMoules;
     }
 
     await renderer.setAnimationLoop(async () => {
@@ -249,8 +278,7 @@ class DreamJourney extends Component<Event> {
         // 동적 import를 사용하여 모듈 가져오기
         const modulePath = `../module/${item}`; // 경로는 모듈 구조에 따라 조정 필요
 
-        const ModuleClass = (await import(/* @vite-ignore */ modulePath))
-          .default;
+        const ModuleClass = (await import(modulePath)).default;
 
         if (ModuleClass) {
           const module = await this.setModule(
