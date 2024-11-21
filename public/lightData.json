@@ -1,0 +1,91 @@
+{
+  "65479341-3327-449e-94a0-9986379bd018": {
+    "uuid": "65479341-3327-449e-94a0-9986379bd018",
+    "type": "PointLight",
+    "position": [
+      0,
+      0.2,
+      0
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "distance": 10000,
+    "color": {
+      "r": 0.038125000000000075,
+      "g": 0.5881134259259257,
+      "b": 0.7625
+    },
+    "decay": 1.1,
+    "power": 62831.8530717959
+  },
+  "1818f78e-1d38-441d-8fbc-3474d1052161": {
+    "uuid": "1818f78e-1d38-441d-8fbc-3474d1052161",
+    "type": "HemisphereLight",
+    "position": [
+      0,
+      1,
+      0
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "color": {
+      "r": 0.8375,
+      "g": 0.8375,
+      "b": 0.8375
+    },
+    "groundColor": {
+      "r": 1,
+      "g": 1,
+      "b": 1
+    },
+    "intensity": 1
+  },
+  "1bd05246-28b6-4cd7-b4bf-c97be7c98dea": {
+    "uuid": "1bd05246-28b6-4cd7-b4bf-c97be7c98dea",
+    "type": "PointLight",
+    "position": [
+      0,
+      107.29103393216363,
+      -24
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "distance": 100,
+    "color": {
+      "r": 1,
+      "g": 1,
+      "b": 1
+    },
+    "decay": 2,
+    "power": 62831.8530717959
+  },
+  "2ae8442f-8fdd-4f20-91b9-86d976b440ee": {
+    "uuid": "2ae8442f-8fdd-4f20-91b9-86d976b440ee",
+    "type": "DirectionalLight",
+    "position": [
+      0,
+      122,
+      -24
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "color": {
+      "r": 0.9,
+      "g": 0.9,
+      "b": 0.9
+    },
+    "intensity": 5
+  }
+}

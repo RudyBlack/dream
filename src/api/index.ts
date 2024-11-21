@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { ResObjectData } from '../@types/object';
 import { ResLightData } from '../@types/light';
 
@@ -26,7 +25,7 @@ export async function saveSceneData(data: any) {
 
 export async function loadSceneData(): Promise<ResObjectData | undefined> {
   try {
-    const response = await fetch(`${API_ENDPOINT}/load-scene`);
+    const response = await fetch(`/sceneData.json`);
     if (response.ok) {
       return await response.json();
     } else {
@@ -39,7 +38,7 @@ export async function loadSceneData(): Promise<ResObjectData | undefined> {
 
 export async function loadLightData(): Promise<ResLightData | undefined> {
   try {
-    const response = await fetch(`${API_ENDPOINT}/load-lights`);
+    const response = await fetch(`/lightData.json`);
     if (response.ok) {
       return await response.json();
     } else {
@@ -111,16 +110,18 @@ export async function patchLightData(partialData: ResLightData) {
 }
 
 export async function loadModulesData(): Promise<string[] | undefined> {
-  try {
-    const response = await fetch(`${API_ENDPOINT}/load-package`);
-    if (response.ok) {
-      return await response.json();
-    } else {
-      console.error('장면 데이터 불러오기 실패:', response.statusText);
-    }
-  } catch (error) {
-    console.error('에러 발생:', error);
-  }
+  // try {
+  //   const response = await fetch(`${API_ENDPOINT}/load-package`);
+  //   if (response.ok) {
+  //     return await response.json();
+  //   } else {
+  //     console.error('장면 데이터 불러오기 실패:', response.statusText);
+  //   }
+  // } catch (error) {
+  //   console.error('에러 발생:', error);
+  // }
+
+  return ['Cloud', 'Moon', 'Sky', 'Ocean', 'Galaxy'];
 }
 
 export async function deleteObject(deleteTarget: string) {
@@ -147,7 +148,12 @@ export async function postObjectOpacity(uuid: string, blob: Blob) {
 }
 
 export async function getObjectOpacity(uuid: string) {
-  return fetch(`${API_ENDPOINT}/object-opacity/${uuid}`, {
+  const res = await fetch(`/opacity_data/${uuid}.bin`, {
     method: 'GET',
+    headers: {
+      'Content-Type': 'application/octet-stream',
+    },
   });
+
+  return res;
 }
