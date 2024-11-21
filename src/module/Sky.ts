@@ -74,7 +74,7 @@ class Sky implements Module {
       this.particleCount,
     );
 
-    renderer.compute(computeInitFn);
+    renderer.compute(computeInitFn as any);
 
     const particlesMesh = this.makeParticlesMesh(
       '/sprite1.png',
@@ -89,7 +89,7 @@ class Sky implements Module {
     scene.add(particlesMesh);
 
     this.root?.on('renderBefore', () => {
-      renderer.compute(computeUpdateFn);
+      renderer.compute(computeUpdateFn as any);
     });
   }
 

@@ -18,6 +18,7 @@ class AfterImage implements Module {
     const combinedPass = scenePassColor.afterImage(0.96);
 
     const postProcessing = new PostProcessing(renderer);
+    // @ts-ignore
     postProcessing.outputNode = combinedPass;
 
     root.on('renderAfter', () => {

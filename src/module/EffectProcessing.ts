@@ -23,6 +23,7 @@ class EffectProcessing implements Module {
     anamorphicPass.resolution = new THREE.Vector2(0.2, 0.2); // 1 = full resolution
 
     const postProcessing = new PostProcessing(renderer);
+    // @ts-ignore
     postProcessing.outputNode = scenePass.add(anamorphicPass.mul(intensity));
     // postProcessing.outputNode = scenePass.add(
     //   anamorphicPass.getTextureNode().gaussianBlur(),

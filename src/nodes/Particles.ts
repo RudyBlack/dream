@@ -14,7 +14,12 @@ import {
   ComputeNode,
 } from 'three/examples/jsm/nodes/Nodes';
 
-import { InstancedBufferAttribute, Mesh, PerspectiveCamera, Scene } from 'three';
+import {
+  InstancedBufferAttribute,
+  Mesh,
+  PerspectiveCamera,
+  Scene,
+} from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 // @ts-ignore
@@ -35,9 +40,15 @@ export class Particles {
   private static SPEED = 0.01;
 
   // public readonly computeUpdateFn: ShaderNodeObject<ComputeNode>;
+  // @ts-ignore
   public readonly computeMouseHit: ShaderNodeObject<ComputeNode>;
 
-  constructor(root: DreamJourney, scene: Scene, renderer: WebGPURenderer, camera: PerspectiveCamera) {
+  constructor(
+    root: DreamJourney,
+    scene: Scene,
+    renderer: WebGPURenderer,
+    camera: PerspectiveCamera,
+  ) {
     this.root = root;
     this.renderer = renderer;
     this.camera = camera;
@@ -45,7 +56,11 @@ export class Particles {
     const velocityBuffer = this.createBuffer(this.particleCount);
     const colorBuffer = this.createBuffer(this.particleCount);
 
-    const computeInitFn = this.computeInitFunction(positionBuffer, colorBuffer, this.particleCount);
+    const computeInitFn = this.computeInitFunction(
+      positionBuffer,
+      colorBuffer,
+      this.particleCount,
+    );
     const computeUpdateFn = this.computeUpdateFunction(
       positionBuffer,
       velocityBuffer,
@@ -55,7 +70,7 @@ export class Particles {
       this.particleCount,
     );
 
-    renderer.compute(computeInitFn);
+    renderer.compute(computeInitFn as any);
 
     const particlesMesh = this.makeParticlesMesh(
       '/sprite1.png',
@@ -67,11 +82,15 @@ export class Particles {
 
     scene.add(particlesMesh);
 
-    this.computeMouseHit = this.computeMouseHitFunction(positionBuffer, velocityBuffer, this.particleCount);
+    this.computeMouseHit = this.computeMouseHitFunction(
+      positionBuffer,
+      velocityBuffer,
+      this.particleCount,
+    );
 
     window.addEventListener('keydown', this.onParticleHitTriggerByKeyboard);
     root.on('renderBefore', () => {
-      renderer.compute(computeUpdateFn);
+      renderer.compute(computeUpdateFn as any);
     });
   }
 
@@ -80,7 +99,7 @@ export class Particles {
     const computeMouseHit = this.computeMouseHit;
 
     if (event.code === 'KeyA') {
-      renderer.compute(computeMouseHit);
+      renderer.compute(computeMouseHit as any);
     }
   };
 
@@ -100,7 +119,9 @@ export class Particles {
       const distArea = float(100).sub(dist).max(0);
 
       const power = distArea.mul(Particles.SPEED);
-      const relativePower = power.mul(float(instanceIndex).min(0).max(1).mul(0.5).add(0.5));
+      const relativePower = power.mul(
+        float(instanceIndex).min(0).max(1).mul(0.5).add(0.5),
+      );
 
       velocity.assign(velocity.add(direction.mul(relativePower)));
     })().compute(particleCount);
@@ -178,7 +199,9 @@ export class Particles {
     const textureNode = texture(map);
 
     const particleMaterial = new SpriteNodeMaterial();
-    particleMaterial.colorNode = textureNode.mul(colorBuffer.element(instanceIndex));
+    particleMaterial.colorNode = textureNode.mul(
+      colorBuffer.element(instanceIndex),
+    );
 
     // @ts-ignore
     particleMaterial.positionNode = positionBuffer.toAttribute();
@@ -198,6 +221,10 @@ export class Particles {
   }
 
   private createBuffer(particleCount: number) {
-    return storage(new StorageInstancedBufferAttribute(particleCount, 3), 'vec3', particleCount);
+    return storage(
+      new StorageInstancedBufferAttribute(particleCount, 3),
+      'vec3',
+      particleCount,
+    );
   }
 }
