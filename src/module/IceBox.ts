@@ -10,6 +10,7 @@ import { uv } from 'three/examples/jsm/nodes/accessors/UVNode';
 class IceBox implements Module {
   save() {
     // throw new Error('Method not implemented.');
+    return null;
   }
   async init(params: InitParam): Promise<void> {
     const { scene, renderer, orbitControls } = params;
