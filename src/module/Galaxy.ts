@@ -75,7 +75,7 @@ class Galaxy implements Module {
       mesh.boundingSphere.radius = 300;
     }
 
-    DebugController.position(mesh);
+    // DebugController.position(mesh);
 
     return Promise.resolve(undefined);
   }

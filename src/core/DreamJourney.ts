@@ -176,9 +176,7 @@ class DreamJourney extends Component<Event> {
       this.trigger('renderAfter');
     });
 
-    const cloudModule = this.loadedModules.find(
-      (m) => m.constructor.name === 'Cloud',
-    ) as Cloud;
+    const cloudModule = this.loadedModules[0] as Cloud;
 
     if (cloudModule) {
       cloudModule.clouds.forEach((c) => {
