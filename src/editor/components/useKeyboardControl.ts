@@ -8,8 +8,6 @@ function useKeyboardControl() {
     const editor = editorInstance;
     if (!editor) return;
 
-    console.log(editor);
-
     const keyboardControlCb = (event: KeyboardEvent) => {
       if (event.key === 'Backspace') {
         editor.deleteObject();

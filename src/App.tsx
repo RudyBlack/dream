@@ -4,9 +4,9 @@ import ViewPage from './view';
 import EditorPage from './editor';
 import { EditorLogicProvider, DreamJourneyLogicProvider } from './provider';
 
-interface Props {}
+//Provider : packages에 있는 모듈의 인스턴스를 자식 컴포넌트에 공유하기 위한 용도.
 
-function App(props: Props) {
+function App() {
   return (
     <>
       <Routes>

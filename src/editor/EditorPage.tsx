@@ -1,17 +1,12 @@
-import DreamJourney from '../../packages/dreamJourney/core';
+import DreamJourney, { Cloud, Galaxy, Ground, Ocean, Sky, Moon } from '../../packages/dreamJourney';
 import Editor from '../../packages/editor';
 
-import * as React from 'react';
-import { useContext, useEffect, useRef } from 'react';
 import { EditorContext } from '../provider/EditorProvider.tsx';
 import { useKeyboardControl } from './components';
 import { getCloudData, getMoonData } from '../api';
-import { Cloud, Galaxy, Ground, Ocean, Sky } from '../../packages/dreamJourney';
-import Moon from '../../packages/dreamJourney/module/Moon.ts';
+import React, { useContext, useEffect, useRef } from 'react';
 
-interface Props {}
-
-function EditorPage(props: Props) {
+function EditorPage() {
   const containerCanvasRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -41,7 +36,7 @@ function EditorPage(props: Props) {
         new Galaxy(),
       ];
 
-      dreamJourney.setModule(...modules);
+      await dreamJourney.setModule(...modules);
 
       const { renderer, camera, scene, orbitControls } = dreamJourney;
       const editor = new Editor(dreamJourney, {
@@ -52,7 +47,7 @@ function EditorPage(props: Props) {
         canvas,
       });
 
-      editor.transformEdit.targetName = 'Cloud';
+      editor.transformEdit.targetName('Cloud');
 
       setModuleInstance?.(editor);
     })();

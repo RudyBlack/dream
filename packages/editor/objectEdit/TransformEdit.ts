@@ -69,7 +69,7 @@ class TransformEdit {
     this.ignoreTarget.push(uuid);
   }
 
-  public set targetName(value: string) {
+  public targetName(value: string) {
     this._targetName = value;
   }
 

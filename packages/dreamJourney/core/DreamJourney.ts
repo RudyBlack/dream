@@ -114,42 +114,11 @@ class DreamJourney extends Component<Event> {
 
     scene.background = new Color(0x19254a);
 
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Digit1') {
-        camera.position.set(0, cameraY, 0);
-        controls.target.set(0, cameraY, -0.01);
-      }
-
-      if (e.code === 'Digit2') {
-        camera.position.set(-122, 81, 300);
-        controls.target.set(0, 3, -0.01);
-      }
-    });
-
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
       this.render();
       this.trigger('renderAfter');
     });
-
-    const cloudModule = this.loadedModules[0] as Cloud;
-
-    if (cloudModule) {
-      cloudModule.clouds.forEach((c) => {
-        getObjectOpacity(c.uuid).then((res) => {
-          const resData = res.body;
-
-          if (resData) {
-            const a = resData.getReader();
-            a.read().then((r) => {
-              if (r.value) {
-                cloudModule.replaceDataTexture(c.uuid, pako.ungzip(r.value, { raw: false }));
-              }
-            });
-          }
-        });
-      });
-    }
   }
 
   /**

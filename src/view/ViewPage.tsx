@@ -26,6 +26,10 @@ function ViewPage() {
       const dreamJourneyInstance = new DreamJourney(canvas, container);
       await dreamJourneyInstance.init();
 
+      /**
+       * 플러그인 패턴
+       * 원하는 플러그인을 주입하여 dreamJourneyInstance 생성
+       */
       const modules = [
         new Cloud(cloudData),
         new Moon(moonData),
@@ -35,7 +39,7 @@ function ViewPage() {
         new Galaxy(),
       ];
 
-      dreamJourneyInstance.setModule(...modules);
+      await dreamJourneyInstance.setModule(...modules);
 
       setInstance?.(dreamJourneyInstance);
     })();
