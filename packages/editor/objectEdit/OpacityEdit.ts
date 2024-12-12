@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import Editor, { InitParam } from '../Editor.ts';
-import Cloud from '../../../module/Cloud.ts';
+import Cloud from '../../dreamJourney/module/Cloud.ts';
 import pako from 'pako';
-import { postObjectOpacity } from '../../../api';
+import { postObjectOpacity } from '../../dreamJourney/api';
 
 class OpacityEdit {
   private initParam: InitParam;

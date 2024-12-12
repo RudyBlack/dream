@@ -15,7 +15,6 @@ import {
 } from 'three/examples/jsm/nodes/Nodes';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 import { uv } from 'three/examples/jsm/nodes/accessors/UVNode';
-import DebugController from '../DebugController.ts';
 
 class Galaxy implements Module {
   constructor() {}

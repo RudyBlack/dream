@@ -61,11 +61,7 @@ class Sky implements Module {
     const velocityBuffer = this.createBuffer(this.particleCount);
     const colorBuffer = this.createBuffer(this.particleCount);
 
-    const computeInitFn = this.computeInitFunction(
-      positionBuffer,
-      colorBuffer,
-      this.particleCount,
-    );
+    const computeInitFn = this.computeInitFunction(positionBuffer, colorBuffer, this.particleCount);
     const computeUpdateFn = this.computeUpdateFunction(
       positionBuffer,
       velocityBuffer,
@@ -107,10 +103,7 @@ class Sky implements Module {
 
     const sphereGeo = new SphereGeometry(5, 100, 100);
     const sphereNodeMat = new MeshStandardNodeMaterial();
-    const backgroundNode = vec3(0, 1, 0)
-      .sub(positionLocal)
-      .mul(0.002)
-      .clamp(0, 1);
+    const backgroundNode = vec3(0, 1, 0).sub(positionLocal).mul(0.002).clamp(0, 1);
 
     sphereNodeMat.colorNode = color(0, 0, 1).mul(backgroundNode);
 
@@ -194,9 +187,7 @@ class Sky implements Module {
     const textureNode = texture(map);
 
     const particleMaterial = new SpriteNodeMaterial();
-    particleMaterial.colorNode = textureNode.mul(
-      colorBuffer.element(instanceIndex),
-    );
+    particleMaterial.colorNode = textureNode.mul(colorBuffer.element(instanceIndex));
 
     // @ts-ignore
     particleMaterial.positionNode = positionBuffer.toAttribute();
@@ -217,11 +208,7 @@ class Sky implements Module {
   }
 
   private createBuffer(particleCount: number) {
-    return storage(
-      new StorageInstancedBufferAttribute(particleCount, 3),
-      'vec3',
-      particleCount,
-    );
+    return storage(new StorageInstancedBufferAttribute(particleCount, 3), 'vec3', particleCount);
   }
 
   dispose(): void {}

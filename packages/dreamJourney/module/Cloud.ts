@@ -1,4 +1,3 @@
-import pako from 'pako';
 import { InitParam, Module } from './type.ts';
 import * as THREE from 'three';
 import { DataTexture, Texture } from 'three';
@@ -17,13 +16,16 @@ import {
 } from 'three/examples/jsm/nodes/Nodes';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
 import { ObjectData, ResObjectData } from '../@types/object';
-import { postObjectOpacity } from '../api';
 
 const CLOUD_COLOR = 0xcfcad6;
 
 class Cloud implements Module {
+  constructor(data?: ResObjectData) {
+    this.cloudData = data;
+  }
+
   private static instanceCount = 1;
-  private cloudData!: ResObjectData;
+  private cloudData?: ResObjectData;
   private _opacityData?: Record<string, Uint8Array>;
 
   private _clouds: THREE.InstancedMesh[] = [];
@@ -36,11 +38,9 @@ class Cloud implements Module {
     this._opacityData = value;
   }
 
-  init(params: InitParam, data: ResObjectData): Promise<void> {
-    const { canvas, container, camera, renderer, scene, orbitControls } =
-      params;
-
-    this.cloudData = data;
+  init(params: InitParam): Promise<void> {
+    const { canvas, container, camera, renderer, scene, orbitControls } = params;
+    const data = this.cloudData;
 
     for (const itemKey in data) {
       const target = data[itemKey];
@@ -117,8 +117,7 @@ class Cloud implements Module {
         const dy = y + j;
 
         // 텍스처 범위를 벗어나면 무시
-        if (dx < 0 || dx >= textureWidth || dy < 0 || dy >= textureHeight)
-          continue;
+        if (dx < 0 || dx >= textureWidth || dy < 0 || dy >= textureHeight) continue;
 
         // 원형 브러시 영역 계산
         if (i * i + j * j > brushRadius * brushRadius) continue;
@@ -180,24 +179,20 @@ class Cloud implements Module {
     }
   }
 
-  private async makeCloud(
-    params: InitParam,
-    uuid: string,
-    cloudData: ObjectData,
-  ) {
+  private async makeCloud(params: InitParam, uuid: string, cloudData: ObjectData) {
     const { scene } = params;
     const { position, scale, path } = cloudData;
 
     const map3 = await this.loadTexture(path ?? '');
     if (!map3) return;
 
-    const maskTexture = this.makeDataTexture(
-      map3.image.width,
-      map3.image.height,
-    );
+    const maskTexture = this.makeDataTexture(map3.image.width, map3.image.height);
 
-    const { positionNode, colorNode, opacityNode, dataTextureNode } =
-      this.makeNodes(map3, maskTexture, { color: '#E1FFFC' });
+    const { positionNode, colorNode, opacityNode, dataTextureNode } = this.makeNodes(
+      map3,
+      maskTexture,
+      { color: '#E1FFFC' },
+    );
 
     const smokeNodeMaterial = new MeshStandardNodeMaterial();
     smokeNodeMaterial.colorNode = colorNode;
@@ -240,11 +235,7 @@ class Cloud implements Module {
 
     const scaleRange = range(2.5, 5);
 
-    const smokeColor = mix(
-      color(0x2c1501),
-      color(0x222222),
-      positionWorld.y.mul(3).clamp(0.5, 1),
-    );
+    const smokeColor = mix(color(0x2c1501), color(0x222222), positionWorld.y.mul(3).clamp(0.5, 1));
 
     const timer = timerLocal(0.05);
 
@@ -253,11 +244,7 @@ class Cloud implements Module {
 
     const opacityNode = textureNode.a.mul(dataTextureNode.r);
 
-    const colorNode = mix(
-      color(options.color ?? 0x015181),
-      smokeColor,
-      float(0.5),
-    );
+    const colorNode = mix(color(options.color ?? 0x015181), smokeColor, float(0.5));
     const positionNode = offsetRange.mul(timer).sin().mul(range(0.08, 0.01));
     const scaleNode = float(scaleRange);
 

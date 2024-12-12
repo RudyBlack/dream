@@ -4,8 +4,8 @@ import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import LightEdit from './LightEdit.ts';
 import TransformEdit from './objectEdit/TransformEdit.ts';
-import { deleteObject, patchLightData } from '../../api';
-import DreamJourney from '../DreamJourney.ts';
+import { deleteObject, patchLightData } from '../dreamJourney/api';
+import DreamJourney from '../dreamJourney/core/DreamJourney.ts';
 import OpacityEdit from './objectEdit/OpacityEdit.ts';
 
 export type InitParam = {
@@ -26,16 +26,12 @@ class Editor {
 
   constructor(DreamJourney: DreamJourney, initParam: InitParam) {
     this.dreamJourney = DreamJourney;
-    const { renderer, camera, scene, orbitControls } = initParam;
     this.initParam = initParam;
 
-    const lightEdit = (this.lightEdit = new LightEdit(this, initParam));
-    const transformEdit = (this.transformEdit = new TransformEdit(
-      this,
-      initParam,
-    ));
+    this.lightEdit = new LightEdit(this, initParam);
+    this.transformEdit = new TransformEdit(this, initParam);
 
-    const opacityEdit = (this.opacityEdit = new OpacityEdit(this, initParam));
+    this.opacityEdit = new OpacityEdit(this, initParam);
   }
 
   public setTransformMode(mode: 'translate' | 'rotate' | 'scale') {
@@ -47,6 +43,11 @@ class Editor {
 
     patchLightData(lightData);
   }
+
+  /**
+   * 삭제
+   */
+  public dispose() {}
 
   public deleteObject() {
     const target = this.transformEdit.getAttachTarget();

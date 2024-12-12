@@ -6,7 +6,7 @@ import {
   HemisphereLightData,
   PointLightData,
   ResLightData,
-} from '../../@types/light';
+} from '../dreamJourney/@types/light';
 import { color } from 'three/examples/jsm/nodes/Nodes';
 
 function isLight(object: THREE.Object3D): object is THREE.Light {

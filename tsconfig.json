@@ -21,7 +21,8 @@
 
 //    "experimentalDecorators": true
     "types": ["three/examples/jsm/nodes/Nodes"],
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react"
   },
 
   "include": ["src"]

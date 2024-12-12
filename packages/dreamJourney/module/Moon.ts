@@ -7,11 +7,17 @@ import { ResObjectData } from '../@types/object';
 class Moon implements Module {
   private moon!: THREE.Group;
   private moonMaterial!: THREE.MeshStandardMaterial;
+  private moonData?: ResObjectData;
+
+  constructor(data?: ResObjectData) {
+    this.moonData = data;
+  }
 
   dispose(): void {}
 
-  async init(params: InitParam, moonData: ResObjectData): Promise<void> {
+  async init(params: InitParam): Promise<void> {
     const { scene } = params;
+    const moonData = this.moonData;
 
     for (const itemKey in moonData) {
       const target = moonData[itemKey];
@@ -22,8 +28,7 @@ class Moon implements Module {
       const res = await loader.loadAsync('/the_moon.glb');
       const moon = res.scene;
       const moonMesh = moon.getObjectByName('Object_2') as Mesh;
-      const moonMaterial = (this.moonMaterial =
-        moonMesh.material as MeshStandardMaterial);
+      const moonMaterial = (this.moonMaterial = moonMesh.material as MeshStandardMaterial);
 
       moonMaterial.opacity = opacity;
       moon.position.set(position[0], position[1], position[2]);
@@ -33,12 +38,6 @@ class Moon implements Module {
       moon.name = 'MOON';
       this.moon = moon;
       scene.add(moon);
-
-      // const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 2);
-      // const bulbLight = new THREE.PointLight(0xa2f0ff, 5000, 10000, 1.1);
-      //
-      // scene.add(hemisphereLight);
-      // scene.add(bulbLight);
     }
 
     return Promise.resolve(undefined);

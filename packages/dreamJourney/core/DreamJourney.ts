@@ -1,4 +1,4 @@
-import { Module } from '../module';
+import { Cloud, Module } from '../module';
 import * as THREE from 'three';
 import { AmbientLight, Color } from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
@@ -15,11 +15,6 @@ import {
 import { ObjectData, ResObjectData } from '../@types/object';
 import LightLoader from './LightLoader.ts';
 import pako from 'pako';
-import Cloud from '../module/Cloud.ts';
-import Moon from '../module/Moon.ts';
-import Sky from '../module/Sky.ts';
-import Ocean from '../module/Ocean.ts';
-import Galaxy from '../module/Galaxy.ts';
 
 interface Event {
   renderBefore: () => void;
@@ -30,6 +25,9 @@ class DreamJourney extends Component<Event> {
   private readonly _canvas: HTMLCanvasElement;
   private readonly _container: HTMLDivElement;
   private _orbitControls?: OrbitControls;
+  private _renderer?: WebGPURenderer;
+  private _scene?: THREE.Scene;
+  private _camera?: THREE.PerspectiveCamera;
 
   private _loadedModules: Module[] = [];
 
@@ -41,32 +39,26 @@ class DreamJourney extends Component<Event> {
     return this._canvas;
   }
 
+  public get renderer() {
+    return this._renderer!;
+  }
+
+  public get scene() {
+    return this._scene!;
+  }
+
+  public get camera() {
+    return this._camera!;
+  }
+
+  public get orbitControls() {
+    return this._orbitControls!;
+  }
+
   constructor(canvas: HTMLCanvasElement, container: HTMLDivElement) {
     super();
     this._canvas = canvas;
     this._container = container;
-  }
-
-  private _renderer?: WebGPURenderer;
-
-  get renderer() {
-    return this._renderer!;
-  }
-
-  private _scene?: THREE.Scene;
-
-  get scene() {
-    return this._scene!;
-  }
-
-  private _camera?: THREE.PerspectiveCamera;
-
-  get camera() {
-    return this._camera!;
-  }
-
-  get orbitControls() {
-    return this._orbitControls!;
   }
 
   public async init() {
@@ -82,10 +74,7 @@ class DreamJourney extends Component<Event> {
       1,
       5000,
     );
-    const orbitControls = (this._orbitControls = new OrbitControls(
-      this._camera,
-      this._canvas,
-    ));
+    const orbitControls = (this._orbitControls = new OrbitControls(this._camera, this._canvas));
     const scene = this.scene;
     const renderer = this._renderer;
     const camera = this._camera;
@@ -137,39 +126,6 @@ class DreamJourney extends Component<Event> {
       }
     });
 
-    const resModuleData = await loadModulesData();
-    const resData = await loadSceneData();
-
-    if (resData && resModuleData) {
-      const loadedMoules = [];
-      const moduleData = {} as Record<string, Record<string, ObjectData>>;
-
-      for (const itemKey in resData) {
-        const target = resData[itemKey];
-
-        if (!moduleData[target.type]) {
-          moduleData[target.type] = {};
-        }
-
-        moduleData[target.type][itemKey] = target;
-      }
-
-      loadedMoules.push(await this.setModule(moduleData['Cloud'], new Cloud()));
-
-      loadedMoules.push(await this.setModule(moduleData['Moon'], new Moon()));
-
-      loadedMoules.push(await this.setModule(moduleData['Sky'], new Sky()));
-
-      loadedMoules.push(await this.setModule(moduleData['Ocean'], new Ocean()));
-
-      loadedMoules.push(
-        await this.setModule(moduleData['Galaxy'], new Galaxy()),
-      );
-
-      // const loadedModules = await this.loadModules(resModuleData, resData);
-      this._loadedModules = loadedMoules;
-    }
-
     await renderer.setAnimationLoop(async () => {
       this.trigger('renderBefore');
       this.render();
@@ -187,10 +143,7 @@ class DreamJourney extends Component<Event> {
             const a = resData.getReader();
             a.read().then((r) => {
               if (r.value) {
-                cloudModule.replaceDataTexture(
-                  c.uuid,
-                  pako.ungzip(r.value, { raw: false }),
-                );
+                cloudModule.replaceDataTexture(c.uuid, pako.ungzip(r.value, { raw: false }));
               }
             });
           }
@@ -199,7 +152,11 @@ class DreamJourney extends Component<Event> {
     }
   }
 
-  public async setModule(data: ResObjectData, ...modules: Module[]) {
+  /**
+   * 사용할 모듈(플러그인)을 로드
+   * @param modules
+   */
+  public async setModule(...modules: Module[]) {
     const canvas = this._canvas!;
     const camera = this._camera!;
     const renderer = this._renderer!;
@@ -207,8 +164,8 @@ class DreamJourney extends Component<Event> {
     const orbitControls = this._orbitControls!;
     const container = this._container!;
 
-    await modules[0].init(
-      {
+    const loadModules = modules.map((module) => {
+      return module.init({
         root: this,
         canvas,
         camera,
@@ -216,35 +173,18 @@ class DreamJourney extends Component<Event> {
         scene,
         orbitControls,
         container,
-      },
-      data,
-    );
-
-    return modules[0];
-  }
-
-  public async save() {
-    const loadedModules = this._loadedModules;
-
-    const saveData = loadedModules.reduce((acc, module) => {
-      const saveData = module.save();
-
-      return { ...acc, ...saveData };
-    }, {});
-
-    patchSceneData(saveData);
-  }
-
-  private loadHDR() {
-    const scene = this.scene;
-    new RGBELoader()
-      .setPath('textures/')
-      .load('star_sky.hdr', function (texture) {
-        texture.mapping = THREE.EquirectangularReflectionMapping;
-
-        scene.background = texture;
-        scene.environment = texture;
       });
+    });
+
+    return await Promise.all(loadModules);
+  }
+
+  /**
+   * 인스턴스 삭제
+   */
+  public dispose() {
+    //TODO
+    this.renderer.dispose();
   }
 
   private render() {
@@ -256,44 +196,6 @@ class DreamJourney extends Component<Event> {
     renderer.render(scene, camera);
     orbitControls?.update();
   }
-
-  private loadModules = async (resData: string[], data: ResObjectData) => {
-    const loadedMoules = [];
-    const moduleData = {} as Record<string, Record<string, ObjectData>>;
-
-    for (const itemKey in data) {
-      const target = data[itemKey];
-
-      if (!moduleData[target.type]) {
-        moduleData[target.type] = {};
-      }
-
-      moduleData[target.type][itemKey] = target;
-    }
-
-    for (const item of resData) {
-      try {
-        // 동적 import를 사용하여 모듈 가져오기
-        const modulePath = `../module/${item}`; // 경로는 모듈 구조에 따라 조정 필요
-
-        const ModuleClass = (await import(modulePath)).default;
-
-        if (ModuleClass) {
-          const module = await this.setModule(
-            moduleData[item],
-            new ModuleClass(),
-          );
-          loadedMoules.push(module);
-        } else {
-          console.warn(`Module for type ${item} not found.`);
-        }
-      } catch (error) {
-        console.error(`Failed to load module for type ${item}:`, error);
-      }
-    }
-
-    return loadedMoules;
-  };
 }
 
 export default DreamJourney;

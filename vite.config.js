@@ -1,5 +1,7 @@
+import react from '@vitejs/plugin-react';
 // vite.config.js
 export default {
+  plugins: [react()],
   // vite.config.js
   server: {
     port: 3000,
