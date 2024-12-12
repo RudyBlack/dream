@@ -1,13 +1,7 @@
 import Editor, { InitParam } from './Editor.ts';
-import { FolderApi, Pane } from 'tweakpane';
+import { Pane } from 'tweakpane';
 import * as THREE from 'three';
-import {
-  DirectionalLightData,
-  HemisphereLightData,
-  PointLightData,
-  ResLightData,
-} from '../dreamJourney/@types/light';
-import { color } from 'three/examples/jsm/nodes/Nodes';
+import { ResLightData } from '@types';
 
 function isLight(object: THREE.Object3D): object is THREE.Light {
   return (object as THREE.Light).isLight !== undefined;
@@ -17,9 +11,7 @@ function isPointLight(object: THREE.Object3D): object is THREE.PointLight {
   return (object as THREE.PointLight).isPointLight !== undefined;
 }
 
-function isDirectionalLight(
-  object: THREE.Object3D,
-): object is THREE.DirectionalLight {
+function isDirectionalLight(object: THREE.Object3D): object is THREE.DirectionalLight {
   return (object as THREE.DirectionalLight).isDirectionalLight !== undefined;
 }
 
@@ -27,9 +19,7 @@ function isSpotLight(object: THREE.Object3D): object is THREE.SpotLight {
   return (object as THREE.SpotLight).isSpotLight !== undefined;
 }
 
-function isHemisphereLight(
-  object: THREE.Object3D,
-): object is THREE.HemisphereLight {
+function isHemisphereLight(object: THREE.Object3D): object is THREE.HemisphereLight {
   return (object as THREE.HemisphereLight).isHemisphereLight !== undefined;
 }
 
@@ -104,8 +94,7 @@ class LightEdit {
     //
 
     pane.on('change', (e) => {
-      if (e.target.controller.constructor.name === 'InputBindingController')
-        return;
+      if (e.target.controller.constructor.name === 'InputBindingController') return;
       const value = e.value;
       if (value && typeof value === 'number') {
         const targetLight = scene.getObjectById(value);

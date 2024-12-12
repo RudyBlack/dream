@@ -2,7 +2,7 @@ import { InitParam, Module } from './type.ts';
 import * as THREE from 'three';
 import { Mesh, MeshStandardMaterial } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { ResObjectData } from '../@types/object';
+import { ResObjectData } from '@types';
 
 class Moon implements Module {
   private moon!: THREE.Group;

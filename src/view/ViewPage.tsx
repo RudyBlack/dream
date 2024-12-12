@@ -2,10 +2,8 @@ import * as React from 'react';
 import { useContext, useEffect, useRef } from 'react';
 
 import { DreamJourneyContext } from '../provider/DreamJourneyProvider.tsx';
-import DreamJourney, { Cloud, Galaxy, Ground, Ocean, Sky } from '../../packages/dreamJourney';
+import DreamJourney, { Cloud, Galaxy, Ground, Ocean, Sky, Moon } from '../../packages/dreamJourney';
 import { getCloudData, getMoonData } from '../api';
-import Moon from '../../packages/dreamJourney/module/Moon.ts';
-import { useLocation } from 'react-router-dom';
 
 function ViewPage() {
   const containerCanvasRef = useRef<HTMLDivElement | null>(null);

@@ -1,5 +1,4 @@
-import { ResObjectData } from '../@types/object';
-import { ResLightData } from '../@types/light';
+import { ResLightData, ResObjectData } from '@types';
 
 const API_ENDPOINT = `http://localhost:3001`;
 

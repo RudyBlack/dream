@@ -20,9 +20,12 @@
     "noFallthroughCasesInSwitch": true,
 
 //    "experimentalDecorators": true
-    "types": ["three/examples/jsm/nodes/Nodes"],
     "allowSyntheticDefaultImports": true,
-    "jsx": "react"
+    "jsx": "react",
+
+    "paths":{
+      "@types": ["./@types"]
+    }
   },
 
   "include": ["src"]

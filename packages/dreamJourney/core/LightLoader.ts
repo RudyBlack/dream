@@ -1,17 +1,8 @@
 import { InitParam } from '../module';
 import * as THREE from 'three';
-import {
-  DirectionalLightData,
-  HemisphereLightData,
-  PointLightData,
-  ResLightData,
-} from '../@types/light';
-import {
-  isDirectionalLight,
-  isHemisphereLight,
-  isPointLight,
-} from '../utils/checkLight.ts';
-import { HemisphereLight } from 'three';
+
+import { isDirectionalLight, isHemisphereLight, isPointLight } from '../utils/checkLight.ts';
+import { DirectionalLightData, HemisphereLightData, PointLightData, ResLightData } from '@types';
 
 class LightLoader {
   private initParam: InitParam;
@@ -20,8 +11,7 @@ class LightLoader {
   }
 
   public loadLight(lightsData: ResLightData) {
-    const { canvas, camera, scene, renderer, root, orbitControls, container } =
-      this.initParam;
+    const { canvas, camera, scene, renderer, root, orbitControls, container } = this.initParam;
 
     for (const lightsDataKey in lightsData) {
       const light = new THREE[lightsData[lightsDataKey].type]();
@@ -45,9 +35,7 @@ class LightLoader {
       }
 
       if (isDirectionalLight(light)) {
-        const targetLightData = lightsData[
-          lightsDataKey
-        ] as DirectionalLightData;
+        const targetLightData = lightsData[lightsDataKey] as DirectionalLightData;
 
         const [x, y, z] = targetLightData.position;
         const [rx, ry, rz] = targetLightData.rotation;
@@ -63,9 +51,7 @@ class LightLoader {
       }
 
       if (isHemisphereLight(light)) {
-        const targetLightData = lightsData[
-          lightsDataKey
-        ] as HemisphereLightData;
+        const targetLightData = lightsData[lightsDataKey] as HemisphereLightData;
 
         const [x, y, z] = targetLightData.position;
         const [rx, ry, rz] = targetLightData.rotation;

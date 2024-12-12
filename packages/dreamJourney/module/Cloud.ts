@@ -15,7 +15,7 @@ import {
   vec3,
 } from 'three/examples/jsm/nodes/Nodes';
 import { float } from 'three/examples/jsm/nodes/shadernode/ShaderNode';
-import { ObjectData, ResObjectData } from '../@types/object';
+import { ObjectData, ResObjectData } from '@types';
 
 const CLOUD_COLOR = 0xcfcad6;
 

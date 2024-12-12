@@ -1,20 +1,12 @@
-import { Cloud, Module } from '../module';
+import { Module } from '../module';
 import * as THREE from 'three';
 import { AmbientLight, Color } from 'three';
 import WebGPURenderer from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Component from '@egjs/component';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
-import {
-  getObjectOpacity,
-  loadLightData,
-  loadModulesData,
-  loadSceneData,
-  patchSceneData,
-} from '../api';
-import { ObjectData, ResObjectData } from '../@types/object';
+import { loadLightData } from '../api';
+
 import LightLoader from './LightLoader.ts';
-import pako from 'pako';
 
 interface Event {
   renderBefore: () => void;

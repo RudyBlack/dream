@@ -20,8 +20,7 @@ class Reflection implements Module {
   dispose(): void {}
 
   public async init(params: InitParam): Promise<void> {
-    const { renderer, scene, canvas, camera, container, orbitControls, root } =
-      params;
+    const { renderer, scene, canvas, camera, container, orbitControls, root } = params;
     this._scene = scene;
     const textureLoader = new THREE.TextureLoader();
 
@@ -33,10 +32,7 @@ class Reflection implements Module {
       new MeshStandardNodeMaterial(),
     );
 
-    const floor = new THREE.Mesh(
-      new THREE.BoxGeometry(50, 0.001, 50),
-      nodeMaterial,
-    );
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(50, 0.001, 50), nodeMaterial);
     floor.add(reflection.target);
     floor.position.set(0, 0, 0);
     scene.add(floor);
@@ -72,17 +68,13 @@ class Reflection implements Module {
   }
 
   private static loadTexture(textureLoader: TextureLoader) {
-    const floorColor = textureLoader.load(
-      '/floors/FloorsCheckerboard_S_Diffuse.jpg',
-    );
+    const floorColor = textureLoader.load('/floors/FloorsCheckerboard_S_Diffuse.jpg');
     // floorColor.wrapS = THREE.RepeatWrapping;
     // floorColor.wrapT = THREE.RepeatWrapping;
 
     floorColor.colorSpace = THREE.SRGBColorSpace;
 
-    const floorNormal = textureLoader.load(
-      '/floors/FloorsCheckerboard_S_Normal.jpg',
-    );
+    const floorNormal = textureLoader.load('/floors/FloorsCheckerboard_S_Normal.jpg');
     // floorNormal.wrapS = THREE.RepeatWrapping;
     // floorNormal.wrapT = THREE.RepeatWrapping;
     return { floorColor, floorNormal };
