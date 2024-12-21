@@ -1,10 +1,15 @@
-import * as React from 'react';
+import React, { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import ViewPage from './view';
-import EditorPage from './editor';
-import { EditorLogicProvider, DreamJourneyLogicProvider } from './provider';
 
-//Provider : packages에 있는 모듈의 인스턴스를 자식 컴포넌트에 공유하기 위한 용도.
+const DreamJourneyLogicProvider = lazy(() => import('./provider/DreamJourneyProvider'));
+const EditorLogicProvider = lazy(() => import('./provider/EditorProvider'));
+
+const EditorPage = lazy(() => import('./editor'));
+const ViewPage = lazy(() => import('./view'));
+
+/**
+ * page 마다 각기 원하는 모듈을 로드함으로써 트리쉐이킹을 구사할 수 있습니다.
+ */
 
 function App() {
   return (

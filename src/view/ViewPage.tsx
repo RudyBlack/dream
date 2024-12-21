@@ -27,6 +27,7 @@ function ViewPage() {
       /**
        * 플러그인 패턴
        * 원하는 플러그인을 주입하여 dreamJourneyInstance 생성
+       * 트리쉐이킹 및 각 모듈별로 디버깅이 유용합니다.
        */
       const modules = [
         new Cloud(cloudData),
