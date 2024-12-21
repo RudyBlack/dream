@@ -6,6 +6,9 @@ export default {
     port: 3000,
   },
   optimizeDeps: {
+    exclude: [
+      'three', // to prevent Vite's code chunking which causes an error
+    ],
     esbuildOptions: {
       target: 'esnext',
     },
