@@ -5,7 +5,7 @@ import { DreamJourneyContext } from '../provider/DreamJourneyProvider.tsx';
 import DreamJourney, { Cloud, Galaxy, Ground, Ocean, Sky, Moon } from '../../packages/dreamJourney';
 import { getCloudData, getMoonData } from '../api';
 
-function ViewPage() {
+function ViewerPage() {
   const containerCanvasRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -55,4 +55,4 @@ function ViewPage() {
   );
 }
 
-export default ViewPage;
+export default ViewerPage;

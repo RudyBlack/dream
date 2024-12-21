@@ -5,7 +5,7 @@ const DreamJourneyLogicProvider = lazy(() => import('./provider/DreamJourneyProv
 const EditorLogicProvider = lazy(() => import('./provider/EditorProvider'));
 
 const EditorPage = lazy(() => import('./editor'));
-const ViewPage = lazy(() => import('./view'));
+const ViewPage = lazy(() => import('./viewer'));
 
 /**
  * page 마다 각기 원하는 모듈을 로드함으로써 트리쉐이킹을 구사할 수 있습니다.
